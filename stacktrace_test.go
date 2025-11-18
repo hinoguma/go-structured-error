@@ -290,3 +290,38 @@ func TestNewStackTraceItem(t *testing.T) {
 		})
 	}
 }
+
+func TestStackTrace_JsonValueString(t *testing.T) {
+
+	testCases := []struct {
+		label    string
+		trace    StackTrace
+		expected string
+	}{
+		{
+			label: "basic stack trace",
+			trace: StackTrace{
+				{
+					File:     "file1.go",
+					Line:     10,
+					Function: "function1",
+				},
+				{
+					File:     "file2.go",
+					Line:     20,
+					Function: "function2",
+				},
+			},
+			expected: `[{"file":"file1.go","line":10,"function":"function1"},{"file":"file2.go","line":20,"function":"function2"}]`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.trace.JsonValueString()
+			if got != tc.expected {
+				t.Errorf("expected json value string %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}

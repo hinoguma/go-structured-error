@@ -104,7 +104,7 @@ func (tags *Tags) deleteKey(key string) {
 	delete(tags.keyMap, key)
 }
 
-func (tags Tags) JsonString() string {
+func (tags Tags) JsonValueString() string {
 	result := "{"
 	for i, tag := range tags.tags {
 		if i > 0 {

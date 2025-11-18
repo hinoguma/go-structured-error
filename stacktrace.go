@@ -1,8 +1,27 @@
 package fault
 
-import "runtime"
+import (
+	"runtime"
+	"strconv"
+)
 
 type StackTrace []StackTraceItem
+
+func (st StackTrace) JsonValueString() string {
+	jv := "["
+	for i, item := range st {
+		if i > 0 {
+			jv += ","
+		}
+		jv += "{"
+		jv += "\"file\":\"" + item.File + "\","
+		jv += "\"line\":" + strconv.Itoa(item.Line) + ","
+		jv += "\"function\":\"" + item.Function + "\""
+		jv += "}"
+	}
+	jv += "]"
+	return jv
+}
 
 func NewStackTrace(skip int, maxDepth int) StackTrace {
 	if skip < 0 {

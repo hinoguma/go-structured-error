@@ -653,7 +653,7 @@ func TestTags_deleteKey(t *testing.T) {
 
 }
 
-func TestTags_JsonString(t *testing.T) {
+func TestTags_JsonValueString(t *testing.T) {
 	testCases := []struct {
 		label    string
 		tags     Tags
@@ -699,7 +699,7 @@ func TestTags_JsonString(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.tags.JsonString()
+			got := tc.tags.JsonValueString()
 			if got != tc.expected {
 				t.Errorf("expected JSON string %v, got %v", tc.expected, got)
 			}

@@ -28,6 +28,13 @@ func (value FaultType) String() string {
 	return string(value)
 }
 
+func (value FaultType) StringWithDefaultNone() string {
+	if value == "" {
+		return "none"
+	}
+	return string(value)
+}
+
 const (
 	FaultTypeNone FaultType = ""
 )
@@ -66,15 +73,11 @@ type FaultError struct {
 }
 
 func (e *FaultError) Error() string {
-	t := e.faultType.String()
-	if t == "" {
-		t = "none"
-	}
 	m := "<no error>"
 	if e.err != nil {
 		m = e.err.Error()
 	}
-	return fmt.Sprintf("[Type: %s] %s", t, m)
+	return fmt.Sprintf("[Type: %s] %s", e.faultType.StringWithDefaultNone(), m)
 }
 
 func (e FaultError) Unwrap() error {
