@@ -83,6 +83,26 @@ func TestJsonFormatter_Format(t *testing.T) {
 			expected: `{"type":"none","message":"error with empty tags","stacktrace":[]}`,
 		},
 		{
+			label: "sub errors",
+			formatter: JsonFormatter{
+				err:        errors.New("main error"),
+				stacktrace: make(StackTrace, 0),
+				when:       nil,
+				requestId:  "",
+				subErrors: []error{
+					errors.New("sub error 1"),
+					&FaultError{
+						err:       errors.New("sub error 2"),
+						faultType: FaultType("testType2"),
+						stacktrace: StackTrace{
+							{File: "sub_example.go", Line: 30, Function: "subFunction"},
+						},
+					},
+				},
+			},
+			expected: `{"type":"none","message":"main error","stacktrace":[],"sub_errors":[{"type":"none","message":"sub error 1","stacktrace":[]},{"type":"testType2","message":"sub error 2","stacktrace":[{"file":"sub_example.go","line":30,"function":"subFunction"}]}]}`,
+		},
+		{
 			label: "empty",
 			formatter: JsonFormatter{
 				err:        nil,

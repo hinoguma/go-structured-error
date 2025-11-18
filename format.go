@@ -42,6 +42,29 @@ func (f JsonFormatter) Format() string {
 	} else {
 		jsonStr += `,"stacktrace":` + f.stacktrace.JsonValueString()
 	}
+	if len(f.subErrors) > 0 {
+		jsonStr += `,"sub_errors":[`
+		for i, subErr := range f.subErrors {
+			if subErr == nil {
+				continue
+			}
+			var jf ErrorFormatter
+			fe, ok := subErr.(interface{ JsonFormatter() ErrorFormatter })
+			if ok {
+				jf = fe.JsonFormatter()
+			} else {
+				jf = JsonFormatter{
+					faultType: FaultTypeNone,
+					err:       subErr,
+				}
+			}
+			if i > 0 {
+				jsonStr += `,`
+			}
+			jsonStr += jf.Format()
+		}
+		jsonStr += `]`
+	}
 	jsonStr += "}"
 	return jsonStr
 }

@@ -2,6 +2,7 @@ package fault
 
 import (
 	"errors"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -505,4 +506,76 @@ func TestFaultError_WithStackTrace(t *testing.T) {
 
 func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 
+}
+
+func TestFaultError_JsonFormatter(t *testing.T) {
+	stdErr := errors.New("go standard error")
+	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
+	faultErr := &FaultError{
+		faultType: FaultTypeNone,
+		err:       stdErr,
+	}
+
+	testCases := []struct {
+		label    string
+		err      *FaultError
+		expected ErrorFormatter
+	}{
+		{
+			label: "all props",
+			err: &FaultError{
+				faultType: FaultTypeNone,
+				err:       stdErr,
+				stacktrace: StackTrace{
+					{
+						File:     "fault_test.go",
+						Line:     75,
+						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonFormat",
+					},
+				},
+				when:      &when,
+				requestId: "12345",
+				tags: Tags{
+					tags: []Tag{
+						{Key: "tag1", Value: StringTagValue("value1")},
+					},
+					keyMap: map[string]int{
+						"tag1": 0,
+					},
+				},
+				subErrors: []error{stdErr, faultErr},
+			},
+			expected: JsonFormatter{
+				faultType: FaultTypeNone,
+				err:       stdErr,
+				stacktrace: StackTrace{
+					{
+						File:     "fault_test.go",
+						Line:     75,
+						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonFormat",
+					},
+				},
+				when:      &when,
+				requestId: "12345",
+				tags: Tags{
+					tags: []Tag{
+						{Key: "tag1", Value: StringTagValue("value1")},
+					},
+					keyMap: map[string]int{
+						"tag1": 0,
+					},
+				},
+				subErrors: []error{stdErr, faultErr},
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.err.JsonFormatter()
+			if !reflect.DeepEqual(got, tc.expected) {
+				t.Errorf("expected JsonFormat %v, got %v", tc.expected, got)
+			}
+		})
+	}
 }

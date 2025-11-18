@@ -200,3 +200,15 @@ func (e *FaultError) AddSubError(errs ...error) Fault {
 	e.subErrors = append(e.subErrors, filtered...)
 	return e
 }
+
+func (e FaultError) JsonFormatter() ErrorFormatter {
+	return JsonFormatter{
+		faultType:  e.faultType,
+		err:        e.err,
+		stacktrace: e.stacktrace,
+		when:       e.when,
+		requestId:  e.requestId,
+		tags:       e.tags,
+		subErrors:  e.subErrors,
+	}
+}
