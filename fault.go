@@ -32,8 +32,24 @@ const (
 	FaultTypeNone FaultType = ""
 )
 
-func NewFault() Fault {
-	return &FaultError{}
+func NewRawFaultError(err error) *FaultError {
+	return &FaultError{
+		faultType:  FaultTypeNone,
+		err:        err,
+		stacktrace: make(StackTrace, 0),
+
+		when:      nil,
+		requestId: "",
+		tags:      NewTags(),
+		subErrors: make([]error, 0),
+	}
+}
+
+func New(message string) *FaultError {
+	err := NewRawFaultError(errors.New(message))
+	// set stack trace starting from caller of NewFaultError
+	err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
+	return err
 }
 
 type FaultError struct {
@@ -112,8 +128,9 @@ func (e *FaultError) SetRequestID(requestID string) Fault {
 	return e
 }
 
+// WithStackTrace sets stack trace starting from caller of WithStackTrace
 func (e *FaultError) WithStackTrace() Fault {
-	return e.SetStackTraceWithSkipMaxDepth(4, GetMaxDepthStackTrace()) // skip 4 to start at caller of WithStackTrace
+	return e.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace()) // skip 4 to start at caller of WithStackTrace
 }
 
 func (e *FaultError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault {

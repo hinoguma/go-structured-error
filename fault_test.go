@@ -25,7 +25,7 @@ func assertFaultError(t *testing.T, got, expected *FaultError) {
 	if got.requestId != expected.requestId {
 		t.Errorf("expected requestId %v, got %v", expected.requestId, got.requestId)
 	}
-	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace)
+	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-fault")
 	assertEqualsTags(t, got.tags, expected.tags)
 	if len(got.subErrors) != len(expected.subErrors) {
 		t.Errorf("expected subErrors length %v, got %v", len(expected.subErrors), len(got.subErrors))
@@ -33,6 +33,52 @@ func assertFaultError(t *testing.T, got, expected *FaultError) {
 		for i := range got.subErrors {
 			if got.subErrors[i] != expected.subErrors[i] {
 				t.Errorf("expected subError %v, got %v", expected.subErrors[i], got.subErrors[i])
+			}
+		}
+	}
+}
+
+func assertFaultErrorWithErrorValue(t *testing.T, got, expected *FaultError) {
+	if got.err == nil || expected.err == nil {
+		if got.err != expected.err {
+			t.Errorf("expected err %v, got %v", expected.err, got.err)
+		}
+	} else {
+		if got.err.Error() != expected.err.Error() {
+			t.Errorf("expected err %v, got %v", expected.err, got.err)
+		}
+	}
+	if got.faultType != expected.faultType {
+		t.Errorf("expected faultType %v, got %v", expected.faultType, got.faultType)
+	}
+	if got.when == nil || expected.when == nil {
+		if got.when != expected.when {
+			t.Errorf("expected when %v, got %v", expected.when, got.when)
+		}
+	} else {
+		if !got.when.Equal(*expected.when) {
+			t.Errorf("expected when %v, got %v", *expected.when, *got.when)
+		}
+	}
+	if got.requestId != expected.requestId {
+		t.Errorf("expected requestId %v, got %v", expected.requestId, got.requestId)
+	}
+	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-fault")
+	assertEqualsTags(t, got.tags, expected.tags)
+	if len(got.subErrors) != len(expected.subErrors) {
+		t.Errorf("expected subErrors length %v, got %v", len(expected.subErrors), len(got.subErrors))
+	} else {
+		for i := range got.subErrors {
+			gotSubErr := got.subErrors[i]
+			expectedSubErr := expected.subErrors[i]
+			if gotSubErr == nil || expectedSubErr == nil {
+				if gotSubErr != expectedSubErr {
+					t.Errorf("expected subError %v, got %v", expectedSubErr, gotSubErr)
+				}
+			} else {
+				if gotSubErr.Error() != expectedSubErr.Error() {
+					t.Errorf("expected subError %v, got %v", expectedSubErr, gotSubErr)
+				}
 			}
 		}
 	}
@@ -149,7 +195,7 @@ func TestFaultError_StackTrace(t *testing.T) {
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "fault.TestFaultError_StackTrace",
+						Function: "github.com/hinoguma/go-fault.TestFaultError_StackTrace",
 					},
 				},
 			},
@@ -157,7 +203,7 @@ func TestFaultError_StackTrace(t *testing.T) {
 				{
 					File:     "fault_test.go",
 					Line:     75,
-					Function: "fault.TestFaultError_StackTrace",
+					Function: "github.com/hinoguma/go-fault.TestFaultError_StackTrace",
 				},
 			},
 		},
@@ -166,7 +212,7 @@ func TestFaultError_StackTrace(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			got := tc.err.StackTrace()
-			assertEqualsStackTrace(t, got, tc.expected)
+			assertEqualsStackTrace(t, got, tc.expected, "github.com/hinoguma/go-fault")
 		})
 	}
 }
@@ -392,4 +438,71 @@ func TestFaultError_Error(t *testing.T) {
 	}
 }
 
-// todo stacktrace, Is, As test
+func TestNewRawFaultError(t *testing.T) {
+	stdErr := errors.New("standard error")
+	expected := &FaultError{
+		faultType:  FaultTypeNone,
+		err:        stdErr,
+		stacktrace: make(StackTrace, 0),
+		when:       nil,
+		requestId:  "",
+		tags:       NewTags(),
+		subErrors:  make([]error, 0),
+	}
+
+	got := NewRawFaultError(stdErr)
+	assertFaultError(t, got, expected)
+}
+
+func TestNew(t *testing.T) {
+	testCases := []struct {
+		label    string
+		message  string
+		expected *FaultError
+	}{
+		{
+			label:   "basic fault error",
+			message: "fault occurred",
+			expected: &FaultError{
+				faultType: FaultTypeNone,
+				err:       errors.New("fault occurred"),
+				stacktrace: []StackTraceItem{
+					{
+						File:     "ignored",
+						Line:     496,
+						Function: "github.com/hinoguma/go-fault.TestNew.func1",
+					},
+					{
+						File:     "ignored",
+						Line:     -1,
+						Function: "testing.tRunner",
+					},
+					{
+						File:     "ignored",
+						Line:     -1,
+						Function: "runtime.goexit",
+					},
+				},
+				when:      nil,
+				requestId: "",
+				tags:      NewTags(),
+				subErrors: make([]error, 0),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := New(tc.message) // 496
+			assertFaultErrorWithErrorValue(t, got, tc.expected)
+		})
+	}
+}
+
+func TestFaultError_WithStackTrace(t *testing.T) {
+
+}
+
+func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
+
+}

@@ -247,7 +247,7 @@ func TestNewStackTrace(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			st := tc.caller()
-			assertEqualsStackTrace(t, st, tc.expected, "github.com/hinoguma/go-fault")
+			assertEqualsStackTrace(t, st, tc.expected, "github.com/hinoguma/go-fault.traceLevel")
 		})
 	}
 
