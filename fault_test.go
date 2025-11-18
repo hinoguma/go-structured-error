@@ -45,9 +45,9 @@ func TestFaultError_Type(t *testing.T) {
 		expected FaultType
 	}{
 		{
-			label:    "initial type is util",
+			label:    "initial type",
 			err:      &FaultError{},
-			expected: FaultTypeUtil,
+			expected: FaultTypeNone,
 		},
 	}
 
@@ -218,11 +218,11 @@ func TestFaultError_AddTag(t *testing.T) {
 			label: "add tags",
 			err:   &FaultError{},
 			addFunc: func(err *FaultError) {
-				err.AddTagString("tag1", "value1").
-					AddTagInt("tag2", 42).
-					AddTagBool("tag3", true).
-					AddTagFloat("tag4", 3.14).
-					AddTagSafe("tag5", StringTagValue("safeValue"))
+				err.AddTagString("tag1", "value1")
+				err.AddTagInt("tag2", 42)
+				err.AddTagBool("tag3", true)
+				err.AddTagFloat("tag4", 3.14)
+				err.AddTagSafe("tag5", StringTagValue("safeValue"))
 			},
 			expected: &FaultError{
 				tags: Tags{
@@ -363,7 +363,33 @@ func TestFaultError_AddSubError(t *testing.T) {
 }
 
 func TestFaultError_Error(t *testing.T) {
+	testCases := []struct {
+		label    string
+		err      *FaultError
+		expected string
+	}{
+		{
+			label: "basic error message",
+			err: &FaultError{
+				err: errors.New("basic error"),
+			},
+			expected: "[Type: none] basic error",
+		},
+		{
+			label:    "has no underlying error",
+			err:      &FaultError{},
+			expected: "[Type: none] <no error>",
+		},
+	}
 
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.err.Error()
+			if got != tc.expected {
+				t.Errorf("expected error string %v, got %v", tc.expected, got)
+			}
+		})
+	}
 }
 
 // todo stacktrace, Is, As test

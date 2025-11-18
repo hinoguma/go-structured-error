@@ -2,6 +2,7 @@ package fault
 
 import (
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -13,20 +14,27 @@ type Fault interface {
 	RequestID() string
 
 	SetErr(err error) Fault
-	SetType(faultType FaultType) Fault
 	SetWhen(t time.Time) Fault
 	SetRequestID(requestID string) Fault
 	WithStackTrace() Fault // auto set stack trace
-	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int)
+	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
 	AddTagSafe(key string, value TagValue) Fault
 	DeleteTag(key string) Fault
 }
 
 type FaultType string
 
+func (value FaultType) String() string {
+	return string(value)
+}
+
 const (
-	FaultTypeUtil FaultType = ""
+	FaultTypeNone FaultType = ""
 )
+
+func NewFault() Fault {
+	return &FaultError{}
+}
 
 type FaultError struct {
 	// required
@@ -42,10 +50,15 @@ type FaultError struct {
 }
 
 func (e *FaultError) Error() string {
-	if e.err == nil {
-		return ""
+	t := e.faultType.String()
+	if t == "" {
+		t = "none"
 	}
-	return e.err.Error()
+	m := "<no error>"
+	if e.err != nil {
+		m = e.err.Error()
+	}
+	return fmt.Sprintf("[Type: %s] %s", t, m)
 }
 
 func (e FaultError) Unwrap() error {
@@ -84,52 +97,53 @@ func (e FaultError) RequestID() string {
 	return e.requestId
 }
 
-func (e *FaultError) SetErr(err error) *FaultError {
+func (e *FaultError) SetErr(err error) Fault {
 	e.err = err
 	return e
 }
 
-func (e *FaultError) SetWhen(t time.Time) *FaultError {
+func (e *FaultError) SetWhen(t time.Time) Fault {
 	e.when = &t
 	return e
 }
 
-func (e *FaultError) SetRequestID(requestID string) *FaultError {
+func (e *FaultError) SetRequestID(requestID string) Fault {
 	e.requestId = requestID
 	return e
 }
 
-func (e *FaultError) WithStackTrace() *FaultError {
+func (e *FaultError) WithStackTrace() Fault {
 	return e.SetStackTraceWithSkipMaxDepth(4, GetMaxDepthStackTrace()) // skip 4 to start at caller of WithStackTrace
 }
 
-func (e *FaultError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) *FaultError {
+func (e *FaultError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault {
 	e.stacktrace = NewStackTrace(skip, maxDepth)
 	return e
 }
 
-func (e *FaultError) AddTagString(key string, value string) *FaultError {
+func (e *FaultError) AddTagString(key string, value string) Fault {
 	e.AddTagSafe(key, StringTagValue(value))
 	return e
 }
 
-func (e *FaultError) AddTagInt(key string, value int) *FaultError {
+func (e *FaultError) AddTagInt(key string, value int) Fault {
 	e.AddTagSafe(key, IntTagValue(value))
 	return e
 }
 
-func (e *FaultError) AddTagBool(key string, value bool) *FaultError {
+func (e *FaultError) AddTagBool(key string, value bool) Fault {
 	e.AddTagSafe(key, BoolTagValue(value))
 	return e
 }
 
-func (e *FaultError) AddTagFloat(key string, value float64) *FaultError {
+func (e *FaultError) AddTagFloat(key string, value float64) Fault {
 	e.AddTagSafe(key, FloatTagValue(value))
 	return e
 }
 
-func (e *FaultError) AddTagSafe(key string, value TagValue) {
+func (e *FaultError) AddTagSafe(key string, value TagValue) Fault {
 	e.tags.SetValueSafe(key, value)
+	return e
 }
 
 // It`s planned to be implemented later
@@ -139,12 +153,12 @@ func (e *FaultError) AddTagSafe(key string, value TagValue) {
 //	return true
 //}
 
-func (e *FaultError) DeleteTag(key string) *FaultError {
+func (e *FaultError) DeleteTag(key string) Fault {
 	e.tags.Delete(key)
 	return e
 }
 
-func (e *FaultError) AddSubError(errs ...error) *FaultError {
+func (e *FaultError) AddSubError(errs ...error) Fault {
 	if len(errs) == 0 {
 		return e
 	}
