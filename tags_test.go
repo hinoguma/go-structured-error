@@ -5,6 +5,15 @@ import (
 	"testing"
 )
 
+func assertEqualsTags(t *testing.T, got, expected Tags) {
+	if !reflect.DeepEqual(got.tags, expected.tags) {
+		t.Errorf("expected tags %v, got %v", expected.tags, got.tags)
+	}
+	if !reflect.DeepEqual(got.keyMap, expected.keyMap) {
+		t.Errorf("expected keyMap %v, got %v", expected.keyMap, got.keyMap)
+	}
+}
+
 func TestTags_SetValueSafe(t *testing.T) {
 	testCases := []struct {
 		label    string
