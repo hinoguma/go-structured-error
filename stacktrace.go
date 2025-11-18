@@ -1,6 +1,7 @@
 package fault
 
 import (
+	"fmt"
 	"runtime"
 	"strconv"
 )
@@ -50,6 +51,10 @@ type StackTraceItem struct {
 	File     string
 	Line     int
 	Function string
+}
+
+func (item StackTraceItem) String() string {
+	return fmt.Sprintf("%s:%d %s", item.File, item.Line, item.Function)
 }
 
 func NewStackTraceItem(f runtime.Frame) StackTraceItem {

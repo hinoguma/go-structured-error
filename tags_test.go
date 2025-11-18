@@ -706,3 +706,31 @@ func TestTags_JsonValueString(t *testing.T) {
 		})
 	}
 }
+
+func TestTag_String(t *testing.T) {
+	testCases := []struct {
+		label    string
+		tag      Tag
+		expected string
+	}{
+		{
+			label:    "string tag value",
+			tag:      Tag{Key: "key1", Value: StringTagValue("value1")},
+			expected: "key:key1 value:value1",
+		},
+		{
+			label:    "int tag value",
+			tag:      Tag{Key: "key2", Value: IntTagValue(42)},
+			expected: "key:key2 value:42",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.tag.String()
+			if got != tc.expected {
+				t.Errorf("expected string %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}

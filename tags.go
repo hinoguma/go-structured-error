@@ -1,11 +1,17 @@
 package fault
 
+import "fmt"
+
 // Tag represents a key-value pair used to provide additional information about an error or event.
 //
 // This becomes {"Tag.key": Tag.value} in JSON format.
 type Tag struct {
 	Key   string
 	Value TagValue
+}
+
+func (tag Tag) String() string {
+	return fmt.Sprintf("key:%s value:%s", tag.Key, tag.Value.String())
 }
 
 func NewTags() Tags {
