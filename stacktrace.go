@@ -5,9 +5,10 @@ import "runtime"
 type StackTrace []StackTraceItem
 
 func NewStackTrace(skip int, maxDepth int) StackTrace {
-	if skip+2 < 2 {
-		skip = 2 // skip for NewStackTrace and runtime.Callers
+	if skip < 0 {
+		skip = 0
 	}
+	skip += 2 // skip Callers and NewStackTrace
 	if maxDepth <= 0 {
 		return make(StackTrace, 0)
 	}
