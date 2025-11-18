@@ -86,7 +86,10 @@ func (e FaultError) Is(target error) bool {
 		return false
 	}
 	switch x := target.(type) {
-	case Fault:
+	case interface {
+		Type() FaultType
+		Unwrap() error
+	}:
 		if x.Type() == e.Type() {
 			return errors.Is(e.Unwrap(), x.Unwrap())
 		}
