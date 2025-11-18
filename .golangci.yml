@@ -1,0 +1,22 @@
+# .golangci.yml
+version: "2"
+run:
+    timeout: 3m
+    tests: true
+
+linters:
+    enable:
+        - govet            # Standard go vet
+        - errcheck         # Check unhandled errors
+        - staticcheck      # Smart static analysis
+        - unused           # Find unused vars, funcs, etc.
+        - ineffassign      # Detect ineffectual assignments
+        - misspell         # Detect misspellings
+    exclusions:
+        paths:
+            - examples/.*  # Exclude examples directory
+
+formatters:
+    enable:
+        - gofmt            # Ensure formatting
+
