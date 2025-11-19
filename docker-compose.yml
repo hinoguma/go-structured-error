@@ -1,0 +1,10 @@
+services:
+    go-fault:
+        build: .
+        container_name: go-fault
+        tty: true
+        volumes:
+            - .:/mount
+        privileged: true
+        command: /bin/sh
+        working_dir: /mount
