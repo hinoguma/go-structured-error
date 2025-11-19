@@ -212,3 +212,15 @@ func (e FaultError) JsonFormatter() ErrorFormatter {
 		subErrors:  e.subErrors,
 	}
 }
+
+func (e FaultError) TextFormatter() ErrorFormatter {
+	return TextFormatter{
+		faultType:  e.faultType,
+		err:        e.err,
+		stacktrace: e.stacktrace,
+		when:       e.when,
+		requestId:  e.requestId,
+		tags:       e.tags,
+		subErrors:  e.subErrors,
+	}
+}
