@@ -3,6 +3,7 @@ package errors
 import (
 	stderrors "errors"
 	"fmt"
+	"github.com/hinoguma/go-fault"
 )
 
 // compatibility functions for errors.Is
@@ -27,11 +28,25 @@ func Join(errs ...error) error {
 
 // compatibility functions for errors.New
 func New(text string) error {
-	return stderrors.New(text)
+	err := fault.NewRawFaultError((stderrors.New(text)))
+	// set stack trace starting from caller of New
+	err.SetStackTraceWithSkipMaxDepth(2, fault.GetMaxDepthStackTrace())
+	return err
 }
 
 // compatibility functions for errors.Wrap in pkg/errors, cockroachdb/errors, etc.
 // a lot of libraries make Wrap function to wrap errors with message
+// Wrap() always return fault.Fault with stack trace
 func Wrap(err error, msg string) error {
-	return fmt.Errorf("%s: %w", msg, err)
+	if err == nil {
+		return nil
+	}
+	fe, ok := err.(fault.Fault)
+	if !ok {
+		fe = fault.NewRawFaultError(err)
+	}
+	if len(fe.StackTrace()) == 0 {
+		fe.WithStackTrace()
+	}
+	return fe.SetErr(fmt.Errorf("%s: %w", msg, fe.Unwrap()))
 }

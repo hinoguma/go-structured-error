@@ -4,7 +4,6 @@ import (
 	"fmt"
 )
 
-// todo: implemant TagValue types for map, slice , array, struct
 type TagValue interface {
 	String() string
 	JsonValueString() string

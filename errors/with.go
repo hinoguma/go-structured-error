@@ -48,6 +48,16 @@ func (w *WithWrapper) StackTraceWithSkipDepth(skip, depth int) *WithWrapper {
 	return w
 }
 
+func (w *WithWrapper) Type(t fault.FaultType) *WithWrapper {
+	if w.err == nil {
+		return w
+	}
+	err := w.convertToFault()
+	err.SetType(t)
+	w.err = err
+	return w
+}
+
 func (w *WithWrapper) RequestID(id string) *WithWrapper {
 	if w.err == nil {
 		return w

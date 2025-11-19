@@ -232,10 +232,12 @@ func TestFaultError_Setters(t *testing.T) {
 			setFunc: func(err *FaultError) {
 				t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 				err.SetWhen(t).
+					SetType("testType").
 					SetRequestID("12345").
 					SetErr(stdErr)
 			},
 			expected: &FaultError{
+				faultType: "testType",
 				when: func() *time.Time {
 					t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 					return &t
@@ -470,7 +472,7 @@ func TestNew(t *testing.T) {
 				stacktrace: []StackTraceItem{
 					{
 						File:     "ignored",
-						Line:     496,
+						Line:     499,
 						Function: "github.com/hinoguma/go-fault.TestNew.func1",
 					},
 					{
@@ -494,7 +496,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := New(tc.message) // 496
+			got := New(tc.message) // 499
 			assertFaultErrorWithErrorValue(t, got, tc.expected)
 		})
 	}

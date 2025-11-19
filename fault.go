@@ -15,6 +15,7 @@ type Fault interface {
 	StackTrace() StackTrace
 
 	SetErr(err error) Fault
+	SetType(faultType FaultType) Fault
 	SetWhen(t time.Time) Fault
 	SetRequestID(requestID string) Fault
 	WithStackTrace() Fault // auto set stack trace
@@ -122,6 +123,11 @@ func (e FaultError) RequestID() string {
 
 func (e *FaultError) SetErr(err error) Fault {
 	e.err = err
+	return e
+}
+
+func (e *FaultError) SetType(faultType FaultType) Fault {
+	e.faultType = faultType
 	return e
 }
 

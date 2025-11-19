@@ -3,6 +3,7 @@ package errors
 import (
 	"errors"
 	"fmt"
+	"github.com/hinoguma/go-fault"
 	"reflect"
 	"strconv"
 	"testing"
@@ -22,6 +23,41 @@ type testCustomError2 struct {
 
 func (e *testCustomError2) Error() string {
 	return "error code: " + strconv.Itoa(e.code)
+}
+
+type testCustomError3 struct {
+	fault.FaultError
+}
+
+func assertEqualsFaultWithoutStackTrace(t *testing.T, got, expected fault.Fault) {
+	if got.Type() != expected.Type() {
+		t.Errorf("expected fault type %v, got %v", expected.Type(), got.Type())
+	}
+	if (got.When() == nil) != (expected.When() == nil) {
+		t.Errorf("expected when %v, got %v", expected.When(), got.When())
+	} else if got.When() != nil && !got.When().Equal(*expected.When()) {
+		t.Errorf("expected when %v, got %v", *expected.When(), *got.When())
+	}
+	if got.RequestID() != expected.RequestID() {
+		t.Errorf("expected request ID %v, got %v", expected.RequestID(), got.RequestID())
+	}
+	unwrapGot := got.Unwrap()
+	unwrapExpected := expected.Unwrap()
+	if unwrapGot == nil || unwrapExpected == nil {
+		if unwrapGot != unwrapExpected {
+			t.Errorf("expected unwrapped error %v, got %v", unwrapExpected, unwrapGot)
+		}
+	} else {
+		unwrapGotFe, okGot := unwrapGot.(fault.Fault)
+		unwrapExpectedFe, okExpected := unwrapExpected.(fault.Fault)
+		if okGot && okExpected {
+			assertEqualsFaultWithoutStackTrace(t, unwrapGotFe, unwrapExpectedFe)
+		} else {
+			if !reflect.DeepEqual(unwrapGot, unwrapExpected) {
+				t.Errorf("expected unwrapped error %v, got %v", unwrapExpected, unwrapGot)
+			}
+		}
+	}
 }
 
 func TestIs(t *testing.T) {
@@ -224,9 +260,140 @@ func TestJoinReturnsNil(t *testing.T) {
 }
 
 func TestWrap(t *testing.T) {
+	testCases := []struct {
+		label    string
+		err      error
+		message  string
+		expected error
+	}{
+		{
+			label:   "wrap standard error",
+			err:     stdErr,
+			message: "additional context",
+			expected: fault.NewRawFaultError(
+				fmt.Errorf("additional context: %w", stdErr),
+			),
+		},
+		{
+			label:    "wrap nil error",
+			err:      nil,
+			message:  "should be nil",
+			expected: nil,
+		},
+		{
+			label:   "wrap fault error",
+			err:     fault.New("Original fault error"),
+			message: "wrapping fault",
+			expected: func() error {
+				fe := fault.New("Original fault error")
+				return fe.SetErr(fmt.Errorf("wrapping fault: %w", fe.Unwrap()))
+			}(),
+		},
+		{
+			label:   "wrap custom error",
+			err:     testCustomError{msg: "custom error occurred"},
+			message: "wrapping custom error",
+			expected: func() error {
+				fe := fault.NewRawFaultError(testCustomError{msg: "custom error occurred"})
+				fe.WithStackTrace()
+				return fe.SetErr(fmt.Errorf("wrapping custom error: %w", fe.Unwrap()))
+			}(),
+		},
+		{
+			label: "wrap custom error implementing error interface",
+			err: func() error {
+				err := &testCustomError3{}
+				err.SetErr(stdErr)
+				return err
+			}(),
+			message: "wrapping custom error3",
+			expected: func() error {
+				err := &testCustomError3{}
+				err.SetErr(fmt.Errorf("wrapping custom error3: %w", stdErr))
+				err.WithStackTrace()
+				return err
+			}(),
+		},
+	}
 
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := Wrap(tc.err, tc.message)
+			if tc.expected == nil || got == nil {
+				if tc.expected != got {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			expectedFe, expectedOk := tc.expected.(fault.Fault)
+			fe, gotOk := got.(fault.Fault)
+			if expectedOk != gotOk {
+				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+			}
+			if expectedOk && gotOk {
+				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+			} else {
+				if !reflect.DeepEqual(got, tc.expected) {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			if len(fe.StackTrace()) == 0 {
+				t.Errorf("expected stack trace to be set, but it was empty")
+			}
+		})
+	}
 }
 
 func TestNew(t *testing.T) {
+	testCases := []struct {
+		label    string
+		message  string
+		expected error
+	}{
+		{
+			label:   "basic error",
+			message: "this is a test error",
+			expected: func() error {
+				fe := fault.NewRawFaultError(errors.New("this is a test error"))
+				return fe
+			}(),
+		},
+		{
+			label:   "empty message",
+			message: "",
+			expected: func() error {
+				fe := fault.NewRawFaultError(errors.New(""))
+				return fe
+			}(),
+		},
+	}
 
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := New(tc.message)
+			if tc.expected == nil || got == nil {
+				if tc.expected != got {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			expectedFe, expectedOk := tc.expected.(fault.Fault)
+			fe, gotOk := got.(fault.Fault)
+			if expectedOk != gotOk {
+				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+			}
+			if expectedOk && gotOk {
+				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+			} else {
+				if !reflect.DeepEqual(got, tc.expected) {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			if len(fe.StackTrace()) == 0 {
+				t.Errorf("expected stack trace to be set, but it was empty")
+			}
+		})
+	}
 }

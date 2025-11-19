@@ -329,6 +329,45 @@ func TestWithWrapper_RequestID(t *testing.T) {
 	}
 }
 
+func TestWithWrapper_Type(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		value    fault.FaultType
+		expected error
+	}{
+		{
+			label:    "nil error",
+			wrapper:  With(nil),
+			value:    "12345",
+			expected: nil,
+		},
+		{
+			label:   "go standard error",
+			wrapper: With(stdErr),
+			value:   "12345",
+			expected: fault.NewRawFaultError(stdErr).
+				SetType("12345"),
+		},
+		{
+			label:   "fault error",
+			wrapper: With(fault.NewRawFaultError(stdErr)),
+			value:   "12345",
+			expected: fault.NewRawFaultError(stdErr).
+				SetType("12345"),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.Type(tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
 func TestWithWrapper_When(t *testing.T) {
 	testCases := []struct {
 		label    string
