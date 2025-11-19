@@ -30,7 +30,7 @@ func Join(errs ...error) error {
 func New(text string) error {
 	err := fault.NewRawFaultError((stderrors.New(text)))
 	// set stack trace starting from caller of New
-	err.SetStackTraceWithSkipMaxDepth(2, fault.GetMaxDepthStackTrace())
+	_ = err.SetStackTraceWithSkipMaxDepth(2, fault.GetMaxDepthStackTrace())
 	return err
 }
 
@@ -46,7 +46,7 @@ func Wrap(err error, msg string) error {
 		fe = fault.NewRawFaultError(err)
 	}
 	if len(fe.StackTrace()) == 0 {
-		fe.WithStackTrace()
+		_ = fe.WithStackTrace()
 	}
 	return fe.SetErr(fmt.Errorf("%s: %w", msg, fe.Unwrap()))
 }

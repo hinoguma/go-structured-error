@@ -69,7 +69,7 @@ func TestWithWrapper_StackTraceWithSkipDepth(t *testing.T) {
 		},
 		{
 			label:   "go standard error skip 0",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			level:   5,
 			skip:    0,
 			depth:   1,
@@ -83,7 +83,7 @@ func TestWithWrapper_StackTraceWithSkipDepth(t *testing.T) {
 		},
 		{
 			label:   "go standard error skip 1",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			level:   5,
 			skip:    1,
 			depth:   1,
@@ -97,7 +97,7 @@ func TestWithWrapper_StackTraceWithSkipDepth(t *testing.T) {
 		},
 		{
 			label:   "go standard error skip 2",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			level:   5,
 			skip:    2,
 			depth:   1,
@@ -111,7 +111,7 @@ func TestWithWrapper_StackTraceWithSkipDepth(t *testing.T) {
 		},
 		{
 			label:   "go standard error skip -1",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			level:   5,
 			skip:    -1,
 			depth:   1,
@@ -146,7 +146,7 @@ func TestWithWrapper_StackTraceWithSkipDepth(t *testing.T) {
 }
 
 func TestWithWrapper_StackTrace(t *testing.T) {
-	with := With(stdErr)
+	with := With(errStd)
 	with.StackTrace()
 	got := with.Err()
 	if got == nil {
@@ -186,7 +186,7 @@ func TestWithWrapper_StackTrace(t *testing.T) {
 	}
 }
 
-var stdErr = errors.New("standard error")
+var errStd = errors.New("standard error")
 
 type testCustomFaultError struct {
 	fault.FaultError
@@ -232,13 +232,13 @@ func TestWithWrapper_convertToFault(t *testing.T) {
 		},
 		{
 			label:    "go standard error",
-			wrapper:  With(stdErr),
-			expected: fault.NewRawFaultError(stdErr),
+			wrapper:  With(errStd),
+			expected: fault.NewRawFaultError(errStd),
 		},
 		{
 			label:    "fault error",
-			wrapper:  With(fault.NewRawFaultError(stdErr)),
-			expected: fault.NewRawFaultError(stdErr),
+			wrapper:  With(fault.NewRawFaultError(errStd)),
+			expected: fault.NewRawFaultError(errStd),
 		},
 		{
 			label:    "custom fault error",
@@ -270,13 +270,13 @@ func TestWithWrapper_Err(t *testing.T) {
 		},
 		{
 			label:    "go standard error",
-			wrapper:  With(stdErr),
-			expected: stdErr,
+			wrapper:  With(errStd),
+			expected: errStd,
 		},
 		{
 			label:    "fault error",
-			wrapper:  With(fault.NewRawFaultError(stdErr)),
-			expected: fault.NewRawFaultError(stdErr),
+			wrapper:  With(fault.NewRawFaultError(errStd)),
+			expected: fault.NewRawFaultError(errStd),
 		},
 	}
 
@@ -305,16 +305,16 @@ func TestWithWrapper_RequestID(t *testing.T) {
 		},
 		{
 			label:   "go standard error",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			value:   "12345",
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				SetRequestID("12345"),
 		},
 		{
 			label:   "fault error",
-			wrapper: With(fault.NewRawFaultError(stdErr)),
+			wrapper: With(fault.NewRawFaultError(errStd)),
 			value:   "12345",
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				SetRequestID("12345"),
 		},
 	}
@@ -344,16 +344,16 @@ func TestWithWrapper_Type(t *testing.T) {
 		},
 		{
 			label:   "go standard error",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			value:   "12345",
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				SetType("12345"),
 		},
 		{
 			label:   "fault error",
-			wrapper: With(fault.NewRawFaultError(stdErr)),
+			wrapper: With(fault.NewRawFaultError(errStd)),
 			value:   "12345",
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				SetType("12345"),
 		},
 	}
@@ -383,16 +383,16 @@ func TestWithWrapper_When(t *testing.T) {
 		},
 		{
 			label:   "go standard error",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			value:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				SetWhen(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)),
 		},
 		{
 			label:   "fault error",
-			wrapper: With(fault.NewRawFaultError(stdErr)),
+			wrapper: With(fault.NewRawFaultError(errStd)),
 			value:   time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC),
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				SetWhen(time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)),
 		},
 	}
@@ -424,18 +424,18 @@ func TestWithWrapper_AddTagSafe(t *testing.T) {
 		},
 		{
 			label:   "go standard error",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			key:     "key1",
 			value:   fault.StringTagValue("value1"),
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				AddTagSafe("key1", fault.StringTagValue("value1")),
 		},
 		{
 			label:   "fault error",
-			wrapper: With(fault.NewRawFaultError(stdErr)),
+			wrapper: With(fault.NewRawFaultError(errStd)),
 			key:     "key1",
 			value:   fault.StringTagValue("value1"),
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				AddTagSafe("key1", fault.StringTagValue("value1")),
 		},
 	}
@@ -465,23 +465,23 @@ func TestWithWrapper_DeleteTag(t *testing.T) {
 		},
 		{
 			label:   "go standard error",
-			wrapper: With(stdErr),
+			wrapper: With(errStd),
 			key:     "key1",
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				DeleteTag("key1"),
 		},
 		{
 			label:   "fault error",
-			wrapper: With(fault.NewRawFaultError(stdErr)),
+			wrapper: With(fault.NewRawFaultError(errStd)),
 			key:     "key1",
-			expected: fault.NewRawFaultError(stdErr).
+			expected: fault.NewRawFaultError(errStd).
 				DeleteTag("key1"),
 		},
 		{
 			label:    "fault error with existing tag",
-			wrapper:  With(fault.NewRawFaultError(stdErr).AddTagSafe("key1", fault.StringTagValue("value1"))),
+			wrapper:  With(fault.NewRawFaultError(errStd).AddTagSafe("key1", fault.StringTagValue("value1"))),
 			key:      "key1",
-			expected: fault.NewRawFaultError(stdErr),
+			expected: fault.NewRawFaultError(errStd),
 		},
 	}
 

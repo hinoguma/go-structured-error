@@ -43,8 +43,7 @@ func (w *WithWrapper) StackTraceWithSkipDepth(skip, depth int) *WithWrapper {
 	if skip < 0 {
 		skip = 0
 	}
-	err.SetStackTraceWithSkipMaxDepth(skip+1, depth)
-	w.err = err
+	w.err = err.SetStackTraceWithSkipMaxDepth(skip+1, depth)
 	return w
 }
 
@@ -53,8 +52,7 @@ func (w *WithWrapper) Type(t fault.FaultType) *WithWrapper {
 		return w
 	}
 	err := w.convertToFault()
-	err.SetType(t)
-	w.err = err
+	w.err = err.SetType(t)
 	return w
 }
 
@@ -63,8 +61,7 @@ func (w *WithWrapper) RequestID(id string) *WithWrapper {
 		return w
 	}
 	err := w.convertToFault()
-	err.SetRequestID(id)
-	w.err = err
+	w.err = err.SetRequestID(id)
 	return w
 }
 
@@ -73,8 +70,7 @@ func (w *WithWrapper) When(t time.Time) *WithWrapper {
 		return w
 	}
 	err := w.convertToFault()
-	err.SetWhen(t)
-	w.err = err
+	w.err = err.SetWhen(t)
 	return w
 }
 
@@ -83,8 +79,7 @@ func (w *WithWrapper) AddTagSafe(key string, value fault.TagValue) *WithWrapper 
 		return w
 	}
 	err := w.convertToFault()
-	err.AddTagSafe(key, value)
-	w.err = err
+	w.err = err.AddTagSafe(key, value)
 	return w
 }
 
@@ -93,7 +88,6 @@ func (w *WithWrapper) DeleteTag(key string) *WithWrapper {
 		return w
 	}
 	err := w.convertToFault()
-	err.DeleteTag(key)
-	w.err = err
+	w.err = err.DeleteTag(key)
 	return w
 }

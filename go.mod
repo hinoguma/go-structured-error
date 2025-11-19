@@ -1,3 +1,3 @@
 module github.com/hinoguma/go-fault
 
-go 1.24
+go 1.22

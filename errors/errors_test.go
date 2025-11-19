@@ -61,8 +61,8 @@ func assertEqualsFaultWithoutStackTrace(t *testing.T, got, expected fault.Fault)
 }
 
 func TestIs(t *testing.T) {
-	stdErr1 := New("standard error")
-	stdErr2 := New("another standard error")
+	errStd1 := New("standard error")
+	errStd2 := New("another standard error")
 	testCases := []struct {
 		label  string
 		err    error
@@ -71,20 +71,20 @@ func TestIs(t *testing.T) {
 	}{
 		{
 			label:  "same error",
-			err:    stdErr1,
-			target: stdErr1,
+			err:    errStd1,
+			target: errStd1,
 			match:  true,
 		},
 		{
 			label:  "different errors",
-			err:    stdErr1,
-			target: stdErr2,
+			err:    errStd1,
+			target: errStd2,
 			match:  false,
 		},
 		{
 			label:  "wrapped error matches target",
-			err:    Wrap(stdErr1, "additional context"),
-			target: stdErr1,
+			err:    Wrap(errStd1, "additional context"),
+			target: errStd1,
 			match:  true,
 		},
 	}
@@ -101,6 +101,7 @@ func TestIs(t *testing.T) {
 
 func TestAs(t *testing.T) {
 	var target testCustomError
+	var target2 *testCustomError2
 	testCases := []struct {
 		label  string
 		err    error
@@ -118,7 +119,7 @@ func TestAs(t *testing.T) {
 		{
 			label:  "custom error2 match",
 			err:    &testCustomError2{code: 404},
-			target: &target,
+			target: &target2,
 			match:  true,
 			want:   &testCustomError2{code: 404},
 		},
@@ -268,10 +269,10 @@ func TestWrap(t *testing.T) {
 	}{
 		{
 			label:   "wrap standard error",
-			err:     stdErr,
+			err:     errStd,
 			message: "additional context",
 			expected: fault.NewRawFaultError(
-				fmt.Errorf("additional context: %w", stdErr),
+				fmt.Errorf("additional context: %w", errStd),
 			),
 		},
 		{
@@ -295,7 +296,7 @@ func TestWrap(t *testing.T) {
 			message: "wrapping custom error",
 			expected: func() error {
 				fe := fault.NewRawFaultError(testCustomError{msg: "custom error occurred"})
-				fe.WithStackTrace()
+				_ = fe.WithStackTrace()
 				return fe.SetErr(fmt.Errorf("wrapping custom error: %w", fe.Unwrap()))
 			}(),
 		},
@@ -303,14 +304,14 @@ func TestWrap(t *testing.T) {
 			label: "wrap custom error implementing error interface",
 			err: func() error {
 				err := &testCustomError3{}
-				err.SetErr(stdErr)
+				_ = err.SetErr(errStd)
 				return err
 			}(),
 			message: "wrapping custom error3",
 			expected: func() error {
 				err := &testCustomError3{}
-				err.SetErr(fmt.Errorf("wrapping custom error3: %w", stdErr))
-				err.WithStackTrace()
+				_ = err.SetErr(fmt.Errorf("wrapping custom error3: %w", errStd))
+				_ = err.WithStackTrace()
 				return err
 			}(),
 		},

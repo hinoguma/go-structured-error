@@ -231,7 +231,7 @@ func TestFaultError_Setters(t *testing.T) {
 			err:   &FaultError{},
 			setFunc: func(err *FaultError) {
 				t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
-				err.SetWhen(t).
+				_ = err.SetWhen(t).
 					SetType("testType").
 					SetRequestID("12345").
 					SetErr(stdErr)
@@ -267,11 +267,11 @@ func TestFaultError_AddTag(t *testing.T) {
 			label: "add tags",
 			err:   &FaultError{},
 			addFunc: func(err *FaultError) {
-				err.AddTagString("tag1", "value1")
-				err.AddTagInt("tag2", 42)
-				err.AddTagBool("tag3", true)
-				err.AddTagFloat("tag4", 3.14)
-				err.AddTagSafe("tag5", StringTagValue("safeValue"))
+				_ = err.AddTagString("tag1", "value1")
+				_ = err.AddTagInt("tag2", 42)
+				_ = err.AddTagBool("tag3", true)
+				_ = err.AddTagFloat("tag4", 3.14)
+				_ = err.AddTagSafe("tag5", StringTagValue("safeValue"))
 			},
 			expected: &FaultError{
 				tags: Tags{
@@ -369,7 +369,7 @@ func TestFaultError_DeleteTag(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			tc.err.DeleteTag(tc.deleteKey)
+			_ = tc.err.DeleteTag(tc.deleteKey)
 			assertFaultError(t, tc.err, tc.expected)
 		})
 	}
@@ -405,7 +405,7 @@ func TestFaultError_AddSubError(t *testing.T) {
 	}
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			tc.err.AddSubError(tc.subErr)
+			_ = tc.err.AddSubError(tc.subErr)
 			assertFaultError(t, tc.err, tc.expected)
 		})
 	}

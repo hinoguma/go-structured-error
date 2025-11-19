@@ -57,7 +57,7 @@ func NewRawFaultError(err error) *FaultError {
 func New(message string) *FaultError {
 	err := NewRawFaultError(errors.New(message))
 	// set stack trace starting from caller of NewFaultError
-	err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
+	_ = err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
 	return err
 }
 
@@ -152,23 +152,19 @@ func (e *FaultError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
 }
 
 func (e *FaultError) AddTagString(key string, value string) Fault {
-	e.AddTagSafe(key, StringTagValue(value))
-	return e
+	return e.AddTagSafe(key, StringTagValue(value))
 }
 
 func (e *FaultError) AddTagInt(key string, value int) Fault {
-	e.AddTagSafe(key, IntTagValue(value))
-	return e
+	return e.AddTagSafe(key, IntTagValue(value))
 }
 
 func (e *FaultError) AddTagBool(key string, value bool) Fault {
-	e.AddTagSafe(key, BoolTagValue(value))
-	return e
+	return e.AddTagSafe(key, BoolTagValue(value))
 }
 
 func (e *FaultError) AddTagFloat(key string, value float64) Fault {
-	e.AddTagSafe(key, FloatTagValue(value))
-	return e
+	return e.AddTagSafe(key, FloatTagValue(value))
 }
 
 func (e *FaultError) AddTagSafe(key string, value TagValue) Fault {
@@ -208,7 +204,7 @@ func (e *FaultError) AddSubError(errs ...error) Fault {
 	return e
 }
 
-func (e FaultError) JsonFormatter() ErrorFormatter {
+func (e *FaultError) JsonFormatter() ErrorFormatter {
 	return JsonFormatter{
 		faultType:  e.faultType,
 		err:        e.err,
@@ -220,7 +216,7 @@ func (e FaultError) JsonFormatter() ErrorFormatter {
 	}
 }
 
-func (e FaultError) TextFormatter() ErrorFormatter {
+func (e *FaultError) TextFormatter() ErrorFormatter {
 	return TextFormatter{
 		faultType:  e.faultType,
 		err:        e.err,

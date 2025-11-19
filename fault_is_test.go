@@ -7,7 +7,6 @@ import (
 )
 
 const testErrorType1 FaultType = "testCustom1"
-const testErrorType2 FaultType = "testCustom2"
 
 func newTestCustomFaultError1(code int) *testCustomFaultError1 {
 	return &testCustomFaultError1{

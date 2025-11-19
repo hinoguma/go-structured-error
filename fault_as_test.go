@@ -163,7 +163,7 @@ func TestFaultError_As(t *testing.T) {
 			scenarioFunc: func(t *testing.T) {
 				// prepare
 				err := newTestCustomFaultError1(200)
-				err.SetErr(ne)
+				_ = err.SetErr(ne)
 				var target *testCustomFaultError1
 				expectedOk := true
 
@@ -181,7 +181,7 @@ func TestFaultError_As(t *testing.T) {
 			scenarioFunc: func(t *testing.T) {
 				// prepare
 				err := newTestCustomFaultError1(200)
-				err.SetErr(ca)
+				_ = err.SetErr(ca)
 				var target *testCustomNonFaultError
 				expectedOk := true
 
@@ -199,7 +199,7 @@ func TestFaultError_As(t *testing.T) {
 			scenarioFunc: func(t *testing.T) {
 				// prepare
 				err := newTestCustomFaultError1(200)
-				err.SetErr(ca)
+				_ = err.SetErr(ca)
 				var target *FaultError
 				expectedOk := false
 
@@ -217,7 +217,7 @@ func TestFaultError_As(t *testing.T) {
 			scenarioFunc: func(t *testing.T) {
 				// prepare
 				err := newTestCustomFaultError1(200)
-				err.SetErr(&FaultError{err: ne})
+				_ = err.SetErr(&FaultError{err: ne})
 				var target *FaultError
 				expectedOk := true
 
