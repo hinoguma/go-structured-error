@@ -12,6 +12,7 @@ type Fault interface {
 	Type() FaultType
 	When() *time.Time
 	RequestID() string
+	StackTrace() StackTrace
 
 	SetErr(err error) Fault
 	SetWhen(t time.Time) Fault
