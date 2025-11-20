@@ -3,26 +3,26 @@
 Go Error library with Flexibility and Functionality
 
 ## Features
-| Feature                                             | go-fault |
-|-----------------------------------------------------|----------|
-| stack trace                                         | ✅        |
-| add error type                                      | ✅        |
-| errors.IsType()                                     | ✅        |
-| add time when error occurred                        | ✅        |
-| add request id to trace which request               | ✅        |
-| additional context data you want to bind with error | ✅        |
-| convert error into JSON string for logging          | ✅        |
+| Feature                                             | Support |
+|-----------------------------------------------------|---------|
+| stack trace                                         | ✅       |
+| add error type                                      | ✅       |
+| errors.IsType()                                     | ✅       |
+| add time when error occurred                        | ✅       |
+| add request id to trace which request               | ✅       |
+| additional context data you want to bind with error | ✅       |
+| convert error into JSON string for logging          | ✅       |
 
 ## Compatibility with standard library errors and other libraries
 
-| Method          | library                      | compatibility |
+| Method          | Library                      | Compatibility |
 |-----------------|------------------------------|---------------|
 | errors.Is()     | Go standard package "errors" | ✅             |
 | errors.As()     | Go standard package "errors" | ✅             |
 | errors.Unwrap() | Go standard package "errors" | ✅             |   
 | errors.Join()   | Go standard package "errors" | ✅             |
 | errors.Wrap()   | pkg/errors                   | ✅             |
-| errors.Cause()  | pkg/errors                   | No support    |
+| errors.Cause()  | pkg/errors                   | Not yet       |
 
 ## How to use
 
