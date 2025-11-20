@@ -243,3 +243,29 @@ func (e *FaultError) TextFormatter() ErrorFormatter {
 		subErrors:  e.subErrors,
 	}
 }
+
+type Typer interface {
+	Type() ErrorType
+}
+
+func IsType(err error, t ErrorType) bool {
+	if err == nil {
+		return false
+	}
+	fe, ok := err.(Typer)
+	if ok && fe.Type() == t {
+		return true
+	}
+
+	switch x := err.(type) {
+	case interface{ Unwrap() error }:
+		return IsType(x.Unwrap(), t)
+	case interface{ Unwrap() []error }:
+		for _, subErr := range x.Unwrap() {
+			if IsType(subErr, t) {
+				return true
+			}
+		}
+	}
+	return false
+}
