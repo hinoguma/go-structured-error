@@ -6,6 +6,14 @@ import (
 	"github.com/hinoguma/go-fault"
 )
 
+// compatibility functions for errors.New
+func New(text string) error {
+	err := fault.NewRawFaultError((stderrors.New(text)))
+	// set stack trace starting from caller of New
+	_ = err.SetStackTraceWithSkipMaxDepth(2, fault.GetMaxDepthStackTrace())
+	return err
+}
+
 // compatibility functions for errors.Is
 func Is(err, target error) bool {
 	return stderrors.Is(err, target)
@@ -24,14 +32,6 @@ func Unwrap(err error) error {
 // compatibility functions for errors.Join
 func Join(errs ...error) error {
 	return stderrors.Join(errs...)
-}
-
-// compatibility functions for errors.New
-func New(text string) error {
-	err := fault.NewRawFaultError((stderrors.New(text)))
-	// set stack trace starting from caller of New
-	_ = err.SetStackTraceWithSkipMaxDepth(2, fault.GetMaxDepthStackTrace())
-	return err
 }
 
 // compatibility functions for errors.Wrap in pkg/errors, cockroachdb/errors, etc.
