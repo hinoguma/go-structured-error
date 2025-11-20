@@ -207,5 +207,4 @@ fmt.PrintF("%+v\n", err)
 // [Type:CustomType1] [Message:error with type] [When:2024-06-01 12:00:00 +0000 UTC] [RequestID:request-1234] [Tags:key1=value1,key2=42,key3=3.14,key4=true]
 ```
 
-#### Is() and As()
 
