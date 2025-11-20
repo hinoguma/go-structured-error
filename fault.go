@@ -6,42 +6,12 @@ import (
 	"time"
 )
 
-type Fault interface {
-	error
-	Unwrap() error
-	Type() ErrorType
-	When() *time.Time
-	RequestID() string
-	StackTrace() StackTrace
-
-	SetErr(err error) Fault
-	SetType(errorType ErrorType) Fault
-	SetWhen(t time.Time) Fault
-	SetRequestID(requestID string) Fault
-	WithStackTrace() Fault // auto set stack trace
-	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
-	AddTagSafe(key string, value TagValue) Fault
-	DeleteTag(key string) Fault
-
-	JsonString() string
+func New(message string) *FaultError {
+	err := NewRawFaultError(errors.New(message))
+	// set stack trace starting from caller of NewFaultError
+	_ = err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
+	return err
 }
-
-type ErrorType string
-
-func (value ErrorType) String() string {
-	return string(value)
-}
-
-func (value ErrorType) StringWithDefaultNone() string {
-	if value == "" {
-		return "none"
-	}
-	return string(value)
-}
-
-const (
-	ErrorTypeNone ErrorType = ""
-)
 
 func NewRawFaultError(err error) *FaultError {
 	return &FaultError{
@@ -56,11 +26,21 @@ func NewRawFaultError(err error) *FaultError {
 	}
 }
 
-func New(message string) *FaultError {
-	err := NewRawFaultError(errors.New(message))
-	// set stack trace starting from caller of NewFaultError
-	_ = err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
-	return err
+const (
+	ErrorTypeNone ErrorType = ""
+)
+
+type ErrorType string
+
+func (value ErrorType) String() string {
+	return string(value)
+}
+
+func (value ErrorType) StringWithDefaultNone() string {
+	if value == "" {
+		return "none"
+	}
+	return string(value)
 }
 
 type FaultError struct {
@@ -244,10 +224,6 @@ func (e *FaultError) TextFormatter() ErrorFormatter {
 	}
 }
 
-type Typer interface {
-	Type() ErrorType
-}
-
 func IsType(err error, t ErrorType) bool {
 	if err == nil {
 		return false
@@ -268,4 +244,36 @@ func IsType(err error, t ErrorType) bool {
 		}
 	}
 	return false
+}
+
+/*********************
+	Interfaces
+ *********************/
+
+type Fault interface {
+	error
+	Unwrap() error
+	Type() ErrorType
+	When() *time.Time
+	RequestID() string
+	StackTrace() StackTrace
+
+	SetErr(err error) Fault
+	SetType(errorType ErrorType) Fault
+	SetWhen(t time.Time) Fault
+	SetRequestID(requestID string) Fault
+	WithStackTrace() Fault // auto set stack trace
+	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
+	AddTagSafe(key string, value TagValue) Fault
+	DeleteTag(key string) Fault
+
+	JsonString() string
+}
+
+type Typer interface {
+	Type() ErrorType
+}
+
+type StackTracer interface {
+	StackTrace() StackTrace
 }
