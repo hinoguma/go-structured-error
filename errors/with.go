@@ -83,6 +83,42 @@ func (w *WithWrapper) AddTagSafe(key string, value fault.TagValue) *WithWrapper 
 	return w
 }
 
+func (w *WithWrapper) AddTagString(key string, value string) *WithWrapper {
+	if w.err == nil {
+		return w
+	}
+	err := w.convertToFault()
+	w.err = err.AddTagSafe(key, fault.StringTagValue(value))
+	return w
+}
+
+func (w *WithWrapper) AddTagInt(key string, value int) *WithWrapper {
+	if w.err == nil {
+		return w
+	}
+	err := w.convertToFault()
+	w.err = err.AddTagSafe(key, fault.IntTagValue(value))
+	return w
+}
+
+func (w *WithWrapper) AddTagFloat(key string, value float64) *WithWrapper {
+	if w.err == nil {
+		return w
+	}
+	err := w.convertToFault()
+	w.err = err.AddTagSafe(key, fault.FloatTagValue(value))
+	return w
+}
+
+func (w *WithWrapper) AddTagBool(key string, value bool) *WithWrapper {
+	if w.err == nil {
+		return w
+	}
+	err := w.convertToFault()
+	w.err = err.AddTagSafe(key, fault.BoolTagValue(value))
+	return w
+}
+
 func (w *WithWrapper) DeleteTag(key string) *WithWrapper {
 	if w.err == nil {
 		return w

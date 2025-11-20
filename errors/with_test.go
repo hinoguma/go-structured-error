@@ -450,6 +450,118 @@ func TestWithWrapper_AddTagSafe(t *testing.T) {
 	}
 }
 
+func TestWithWrapper_AddTagString(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    string
+		expected error
+	}{
+		{
+			label:   "string",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   "value1",
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.StringTagValue("value1")),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagString(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagInt(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    int
+		expected error
+	}{
+		{
+			label:   "int",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   42,
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.IntTagValue(42)),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagInt(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagFloat(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    float64
+		expected error
+	}{
+		{
+			label:   "int",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   42,
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.FloatTagValue(42)),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagFloat(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagBool(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    bool
+		expected error
+	}{
+		{
+			label:   "bool",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   true,
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.BoolTagValue(true)),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagBool(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
 func TestWithWrapper_DeleteTag(t *testing.T) {
 	testCases := []struct {
 		label    string
