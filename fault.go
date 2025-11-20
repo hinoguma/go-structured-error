@@ -205,6 +205,21 @@ func (e *FaultError) JsonString() string {
 	return e.JsonFormatter().Format()
 }
 
+func (e *FaultError) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if f.Flag('+') {
+			_, _ = fmt.Fprintf(f, "%s", e.TextFormatter().Format())
+			return
+		}
+		_, _ = fmt.Fprintf(f, "%s", e.Error())
+	case 's':
+		_, _ = fmt.Fprintf(f, "%s", e.Error())
+	case 'q':
+		_, _ = fmt.Fprintf(f, "%q", e.Error())
+	}
+}
+
 func (e *FaultError) JsonFormatter() ErrorFormatter {
 	return JsonFormatter{
 		faultType:  e.faultType,

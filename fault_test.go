@@ -2,6 +2,7 @@ package fault
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -628,6 +629,50 @@ func TestFaultError_JsonString(t *testing.T) {
 			got := tc.err.JsonString()
 			if got != tc.expected {
 				t.Errorf("expected JsonString %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestFaultError_Format(t *testing.T) {
+
+	testCases := []struct {
+		label         string
+		err           *FaultError
+		expectedS     string
+		expectedV     string
+		expectedVPlus string
+		expectedQ     string
+	}{
+		{
+			label: "basic format",
+			err: &FaultError{
+				faultType: FaultTypeNone,
+				err:       errors.New("basic error"),
+			},
+			expectedS:     "[Type: none] basic error",
+			expectedV:     "[Type: none] basic error",
+			expectedVPlus: "[Type:none] [Error:basic error]\n----end\n",
+			expectedQ:     `"[Type: none] basic error"`,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			gotS := fmt.Sprintf("%s", tc.err)
+			if gotS != tc.expectedS {
+				t.Errorf("expectedS format %v, got %v", tc.expectedS, gotS)
+			}
+			gotV := fmt.Sprintf("%v", tc.err)
+			if gotV != tc.expectedV {
+				t.Errorf("expectedV format %v, got %v", tc.expectedV, gotV)
+			}
+			gotVPlus := fmt.Sprintf("%+v", tc.err)
+			if gotVPlus != tc.expectedVPlus {
+				t.Errorf("expectedVPlus format %v, got %v", tc.expectedVPlus, gotVPlus)
+			}
+			gotT := fmt.Sprintf("%q", tc.err)
+			if gotT != tc.expectedQ {
+				t.Errorf("expectedQ format %v, got %v", tc.expectedQ, gotT)
 			}
 		})
 	}
