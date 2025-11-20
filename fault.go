@@ -86,20 +86,15 @@ func (e FaultError) Unwrap() error {
 	return e.err
 }
 
-func (e FaultError) Is(target error) bool {
+func (e *FaultError) Is(target error) bool {
 	if target == nil {
 		return false
 	}
-	switch x := target.(type) {
-	case interface {
-		Type() FaultType
-		Unwrap() error
-	}:
-		if x.Type() == e.Type() {
-			return errors.Is(e.Unwrap(), x.Unwrap())
-		}
+	targetFe, ok := target.(Fault)
+	if !ok {
+		return false
 	}
-	return false
+	return e.Type() == targetFe.Type() && errors.Is(e.Unwrap(), targetFe.Unwrap())
 }
 
 func (e FaultError) Type() FaultType {
