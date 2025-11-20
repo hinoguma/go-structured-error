@@ -9,13 +9,13 @@ import (
 type Fault interface {
 	error
 	Unwrap() error
-	Type() FaultType
+	Type() ErrorType
 	When() *time.Time
 	RequestID() string
 	StackTrace() StackTrace
 
 	SetErr(err error) Fault
-	SetType(faultType FaultType) Fault
+	SetType(errorType ErrorType) Fault
 	SetWhen(t time.Time) Fault
 	SetRequestID(requestID string) Fault
 	WithStackTrace() Fault // auto set stack trace
@@ -26,13 +26,13 @@ type Fault interface {
 	JsonString() string
 }
 
-type FaultType string
+type ErrorType string
 
-func (value FaultType) String() string {
+func (value ErrorType) String() string {
 	return string(value)
 }
 
-func (value FaultType) StringWithDefaultNone() string {
+func (value ErrorType) StringWithDefaultNone() string {
 	if value == "" {
 		return "none"
 	}
@@ -40,12 +40,12 @@ func (value FaultType) StringWithDefaultNone() string {
 }
 
 const (
-	FaultTypeNone FaultType = ""
+	ErrorTypeNone ErrorType = ""
 )
 
 func NewRawFaultError(err error) *FaultError {
 	return &FaultError{
-		faultType:  FaultTypeNone,
+		errorType:  ErrorTypeNone,
 		err:        err,
 		stacktrace: make(StackTrace, 0),
 
@@ -65,7 +65,7 @@ func New(message string) *FaultError {
 
 type FaultError struct {
 	// required
-	faultType  FaultType
+	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
 
@@ -81,7 +81,7 @@ func (e *FaultError) Error() string {
 	if e.err != nil {
 		m = e.err.Error()
 	}
-	return fmt.Sprintf("[Type: %s] %s", e.faultType.StringWithDefaultNone(), m)
+	return fmt.Sprintf("[Type: %s] %s", e.errorType.StringWithDefaultNone(), m)
 }
 
 func (e FaultError) Unwrap() error {
@@ -99,8 +99,8 @@ func (e *FaultError) Is(target error) bool {
 	return e.Type() == targetFe.Type() && errors.Is(e.Unwrap(), targetFe.Unwrap())
 }
 
-func (e FaultError) Type() FaultType {
-	return e.faultType
+func (e FaultError) Type() ErrorType {
+	return e.errorType
 }
 
 func (e FaultError) StackTrace() StackTrace {
@@ -123,8 +123,8 @@ func (e *FaultError) SetErr(err error) Fault {
 	return e
 }
 
-func (e *FaultError) SetType(faultType FaultType) Fault {
-	e.faultType = faultType
+func (e *FaultError) SetType(errorType ErrorType) Fault {
+	e.errorType = errorType
 	return e
 }
 
@@ -222,7 +222,7 @@ func (e *FaultError) Format(f fmt.State, verb rune) {
 
 func (e *FaultError) JsonFormatter() ErrorFormatter {
 	return JsonFormatter{
-		faultType:  e.faultType,
+		errorType:  e.errorType,
 		err:        e.err,
 		stacktrace: e.stacktrace,
 		when:       e.when,
@@ -234,7 +234,7 @@ func (e *FaultError) JsonFormatter() ErrorFormatter {
 
 func (e *FaultError) TextFormatter() ErrorFormatter {
 	return TextFormatter{
-		faultType:  e.faultType,
+		errorType:  e.errorType,
 		err:        e.err,
 		stacktrace: e.stacktrace,
 		when:       e.when,

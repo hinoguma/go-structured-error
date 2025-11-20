@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-const testErrorType1 FaultType = "testCustom1"
+const testErrorType1 ErrorType = "testCustom1"
 
 func newTestCustomFaultError1(code int) *testCustomFaultError1 {
 	return &testCustomFaultError1{
 		FaultError: FaultError{
-			faultType: testErrorType1,
+			errorType: testErrorType1,
 		},
 		code: code,
 	}

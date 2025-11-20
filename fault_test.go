@@ -12,8 +12,8 @@ func assertFaultError(t *testing.T, got, expected *FaultError) {
 	if got.err != expected.err {
 		t.Errorf("expected err %v, got %v", expected.err, got.err)
 	}
-	if got.faultType != expected.faultType {
-		t.Errorf("expected faultType %v, got %v", expected.faultType, got.faultType)
+	if got.errorType != expected.errorType {
+		t.Errorf("expected errorType %v, got %v", expected.errorType, got.errorType)
 	}
 	if got.when == nil || expected.when == nil {
 		if got.when != expected.when {
@@ -50,8 +50,8 @@ func assertFaultErrorWithErrorValue(t *testing.T, got, expected *FaultError) {
 			t.Errorf("expected err %v, got %v", expected.err, got.err)
 		}
 	}
-	if got.faultType != expected.faultType {
-		t.Errorf("expected faultType %v, got %v", expected.faultType, got.faultType)
+	if got.errorType != expected.errorType {
+		t.Errorf("expected errorType %v, got %v", expected.errorType, got.errorType)
 	}
 	if got.when == nil || expected.when == nil {
 		if got.when != expected.when {
@@ -90,12 +90,12 @@ func TestFaultError_Type(t *testing.T) {
 	testCases := []struct {
 		label    string
 		err      *FaultError
-		expected FaultType
+		expected ErrorType
 	}{
 		{
 			label:    "initial type",
 			err:      &FaultError{},
-			expected: FaultTypeNone,
+			expected: ErrorTypeNone,
 		},
 	}
 
@@ -238,7 +238,7 @@ func TestFaultError_Setters(t *testing.T) {
 					SetErr(stdErr)
 			},
 			expected: &FaultError{
-				faultType: "testType",
+				errorType: "testType",
 				when: func() *time.Time {
 					t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 					return &t
@@ -445,7 +445,7 @@ func TestFaultError_Error(t *testing.T) {
 func TestNewRawFaultError(t *testing.T) {
 	stdErr := errors.New("standard error")
 	expected := &FaultError{
-		faultType:  FaultTypeNone,
+		errorType:  ErrorTypeNone,
 		err:        stdErr,
 		stacktrace: make(StackTrace, 0),
 		when:       nil,
@@ -468,7 +468,7 @@ func TestNew(t *testing.T) {
 			label:   "basic fault error",
 			message: "fault occurred",
 			expected: &FaultError{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       errors.New("fault occurred"),
 				stacktrace: []StackTraceItem{
 					{
@@ -515,7 +515,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 	faultErr := &FaultError{
-		faultType: FaultTypeNone,
+		errorType: ErrorTypeNone,
 		err:       stdErr,
 	}
 
@@ -527,7 +527,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 		{
 			label: "all props",
 			err: &FaultError{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
@@ -549,7 +549,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 				subErrors: []error{stdErr, faultErr},
 			},
 			expected: JsonFormatter{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
@@ -587,7 +587,7 @@ func TestFaultError_JsonString(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 	faultErr := &FaultError{
-		faultType: FaultTypeNone,
+		errorType: ErrorTypeNone,
 		err:       errors.New("go standard error2"),
 	}
 
@@ -599,7 +599,7 @@ func TestFaultError_JsonString(t *testing.T) {
 		{
 			label: "all props",
 			err: &FaultError{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
@@ -647,7 +647,7 @@ func TestFaultError_Format(t *testing.T) {
 		{
 			label: "basic format",
 			err: &FaultError{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       errors.New("basic error"),
 			},
 			expectedS:     "[Type: none] basic error",

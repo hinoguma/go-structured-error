@@ -333,7 +333,7 @@ func TestWithWrapper_Type(t *testing.T) {
 	testCases := []struct {
 		label    string
 		wrapper  *WithWrapper
-		value    fault.FaultType
+		value    fault.ErrorType
 		expected error
 	}{
 		{

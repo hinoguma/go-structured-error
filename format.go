@@ -8,7 +8,7 @@ type ErrorFormatter interface {
 
 type JsonFormatter struct {
 	// required
-	faultType  FaultType
+	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
 
@@ -21,7 +21,7 @@ type JsonFormatter struct {
 
 func (f JsonFormatter) Format() string {
 	jsonStr := "{"
-	jsonStr += `"type":"` + f.faultType.StringWithDefaultNone() + `"`
+	jsonStr += `"type":"` + f.errorType.StringWithDefaultNone() + `"`
 	if f.err == nil {
 		jsonStr += `,"message":""`
 	} else {
@@ -54,7 +54,7 @@ func (f JsonFormatter) Format() string {
 				jf = fe.JsonFormatter()
 			} else {
 				jf = JsonFormatter{
-					faultType: FaultTypeNone,
+					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
 			}
@@ -71,7 +71,7 @@ func (f JsonFormatter) Format() string {
 
 type TextFormatter struct {
 	// required
-	faultType  FaultType
+	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
 
@@ -83,7 +83,7 @@ type TextFormatter struct {
 }
 
 func (f TextFormatter) Format() string {
-	txt := "[" + "Type:" + f.faultType.StringWithDefaultNone() + "] "
+	txt := "[" + "Type:" + f.errorType.StringWithDefaultNone() + "] "
 	if f.err == nil {
 		txt += "[Error:<no error>]"
 	} else {
@@ -122,7 +122,7 @@ func (f TextFormatter) Format() string {
 				subFormatter = fe.TextFormatter().(TextFormatter)
 			} else {
 				subFormatter = TextFormatter{
-					faultType: FaultTypeNone,
+					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
 			}

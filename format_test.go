@@ -15,7 +15,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 		{
 			label: "required fields",
 			formatter: JsonFormatter{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
 				stacktrace: StackTrace{
 					{
@@ -37,7 +37,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 		{
 			label: "with when and requestId",
 			formatter: JsonFormatter{
-				faultType:  FaultType("testType"),
+				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
 				stacktrace: make(StackTrace, 0),
 				when: func() *time.Time {
@@ -93,7 +93,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 					errors.New("sub error 1"),
 					&FaultError{
 						err:       errors.New("sub error 2"),
-						faultType: FaultType("testType2"),
+						errorType: ErrorType("testType2"),
 						stacktrace: StackTrace{
 							{File: "sub_example.go", Line: 30, Function: "subFunction"},
 						},
@@ -133,7 +133,7 @@ func TestTextFormatter_Format(t *testing.T) {
 		{
 			label: "required fields",
 			formatter: TextFormatter{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
 				stacktrace: StackTrace{
 					{
@@ -161,7 +161,7 @@ func TestTextFormatter_Format(t *testing.T) {
 		{
 			label: "with when and requestId",
 			formatter: TextFormatter{
-				faultType:  FaultType("testType"),
+				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
 				stacktrace: make(StackTrace, 0),
 				when: func() *time.Time {
@@ -227,7 +227,7 @@ func TestTextFormatter_Format(t *testing.T) {
 					errors.New("sub error 1"),
 					&FaultError{
 						err:       errors.New("sub error 2"),
-						faultType: FaultType("testType2"),
+						errorType: ErrorType("testType2"),
 						stacktrace: StackTrace{
 							{File: "sub_example.go", Line: 30, Function: "subFunction"},
 						},

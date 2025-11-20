@@ -47,7 +47,7 @@ func (w *WithWrapper) StackTraceWithSkipDepth(skip, depth int) *WithWrapper {
 	return w
 }
 
-func (w *WithWrapper) Type(t fault.FaultType) *WithWrapper {
+func (w *WithWrapper) Type(t fault.ErrorType) *WithWrapper {
 	if w.err == nil {
 		return w
 	}
