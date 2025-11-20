@@ -22,6 +22,8 @@ type Fault interface {
 	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
 	AddTagSafe(key string, value TagValue) Fault
 	DeleteTag(key string) Fault
+
+	JsonString() string
 }
 
 type FaultType string
@@ -197,6 +199,10 @@ func (e *FaultError) AddSubError(errs ...error) Fault {
 	}
 	e.subErrors = append(e.subErrors, filtered...)
 	return e
+}
+
+func (e *FaultError) JsonString() string {
+	return e.JsonFormatter().Format()
 }
 
 func (e *FaultError) JsonFormatter() ErrorFormatter {

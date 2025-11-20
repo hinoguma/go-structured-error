@@ -581,3 +581,54 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 		})
 	}
 }
+
+func TestFaultError_JsonString(t *testing.T) {
+	stdErr := errors.New("go standard error")
+	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
+	faultErr := &FaultError{
+		faultType: FaultTypeNone,
+		err:       errors.New("go standard error2"),
+	}
+
+	testCases := []struct {
+		label    string
+		err      *FaultError
+		expected string
+	}{
+		{
+			label: "all props",
+			err: &FaultError{
+				faultType: FaultTypeNone,
+				err:       stdErr,
+				stacktrace: StackTrace{
+					{
+						File:     "fault_test.go",
+						Line:     75,
+						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonString",
+					},
+				},
+				when:      &when,
+				requestId: "12345",
+				tags: Tags{
+					tags: []Tag{
+						{Key: "tag1", Value: StringTagValue("value1")},
+					},
+					keyMap: map[string]int{
+						"tag1": 0,
+					},
+				},
+				subErrors: []error{stdErr, faultErr},
+			},
+			expected: `{"type":"none","message":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1"},"stacktrace":[{"file":"fault_test.go","line":75,"function":"github.com/hinoguma/go-fault.TestFaultError_JsonString"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.err.JsonString()
+			if got != tc.expected {
+				t.Errorf("expected JsonString %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
