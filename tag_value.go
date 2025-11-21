@@ -1,6 +1,7 @@
 package fault
 
 import (
+	"encoding/json"
 	"fmt"
 )
 
@@ -16,7 +17,8 @@ func (v StringTagValue) String() string {
 }
 
 func (v StringTagValue) JsonValueString() string {
-	return "\"" + string(v) + "\""
+	s, _ := json.Marshal(v.String())
+	return string(s)
 }
 
 type IntTagValue int

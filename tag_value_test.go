@@ -62,6 +62,11 @@ func TestTagValue_JsonValueString(t *testing.T) {
 			expected: "\"example string\"",
 		},
 		{
+			label:    "string with escapes",
+			tagVal:   StringTagValue("line1\nline2\"quote\"\\backslash"),
+			expected: "\"line1\\nline2\\\"quote\\\"\\\\backslash\"",
+		},
+		{
 			label:    "IntTagValue",
 			tagVal:   IntTagValue(42),
 			expected: "42",

@@ -6,44 +6,16 @@ import (
 	"time"
 )
 
-type Fault interface {
-	error
-	Unwrap() error
-	Type() FaultType
-	When() *time.Time
-	RequestID() string
-	StackTrace() StackTrace
-
-	SetErr(err error) Fault
-	SetType(faultType FaultType) Fault
-	SetWhen(t time.Time) Fault
-	SetRequestID(requestID string) Fault
-	WithStackTrace() Fault // auto set stack trace
-	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
-	AddTagSafe(key string, value TagValue) Fault
-	DeleteTag(key string) Fault
+func New(message string) *FaultError {
+	err := NewRawFaultError(errors.New(message))
+	// set stack trace starting from caller of NewFaultError
+	_ = err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
+	return err
 }
-
-type FaultType string
-
-func (value FaultType) String() string {
-	return string(value)
-}
-
-func (value FaultType) StringWithDefaultNone() string {
-	if value == "" {
-		return "none"
-	}
-	return string(value)
-}
-
-const (
-	FaultTypeNone FaultType = ""
-)
 
 func NewRawFaultError(err error) *FaultError {
 	return &FaultError{
-		faultType:  FaultTypeNone,
+		errorType:  ErrorTypeNone,
 		err:        err,
 		stacktrace: make(StackTrace, 0),
 
@@ -54,16 +26,26 @@ func NewRawFaultError(err error) *FaultError {
 	}
 }
 
-func New(message string) *FaultError {
-	err := NewRawFaultError(errors.New(message))
-	// set stack trace starting from caller of NewFaultError
-	_ = err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
-	return err
+const (
+	ErrorTypeNone ErrorType = ""
+)
+
+type ErrorType string
+
+func (value ErrorType) String() string {
+	return string(value)
+}
+
+func (value ErrorType) StringWithDefaultNone() string {
+	if value == "" {
+		return "none"
+	}
+	return string(value)
 }
 
 type FaultError struct {
 	// required
-	faultType  FaultType
+	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
 
@@ -75,35 +57,30 @@ type FaultError struct {
 }
 
 func (e *FaultError) Error() string {
-	m := "<no error>"
+	m := NoErrStr
 	if e.err != nil {
 		m = e.err.Error()
 	}
-	return fmt.Sprintf("[Type: %s] %s", e.faultType.StringWithDefaultNone(), m)
+	return fmt.Sprintf("[Type: %s] %s", e.errorType.StringWithDefaultNone(), m)
 }
 
 func (e FaultError) Unwrap() error {
 	return e.err
 }
 
-func (e FaultError) Is(target error) bool {
+func (e *FaultError) Is(target error) bool {
 	if target == nil {
 		return false
 	}
-	switch x := target.(type) {
-	case interface {
-		Type() FaultType
-		Unwrap() error
-	}:
-		if x.Type() == e.Type() {
-			return errors.Is(e.Unwrap(), x.Unwrap())
-		}
+	targetFe, ok := target.(Fault)
+	if !ok {
+		return false
 	}
-	return false
+	return e.Type() == targetFe.Type() && errors.Is(e.Unwrap(), targetFe.Unwrap())
 }
 
-func (e FaultError) Type() FaultType {
-	return e.faultType
+func (e FaultError) Type() ErrorType {
+	return e.errorType
 }
 
 func (e FaultError) StackTrace() StackTrace {
@@ -126,8 +103,8 @@ func (e *FaultError) SetErr(err error) Fault {
 	return e
 }
 
-func (e *FaultError) SetType(faultType FaultType) Fault {
-	e.faultType = faultType
+func (e *FaultError) SetType(errorType ErrorType) Fault {
+	e.errorType = errorType
 	return e
 }
 
@@ -204,9 +181,28 @@ func (e *FaultError) AddSubError(errs ...error) Fault {
 	return e
 }
 
+func (e *FaultError) JsonString() string {
+	return e.JsonFormatter().Format()
+}
+
+func (e *FaultError) Format(f fmt.State, verb rune) {
+	switch verb {
+	case 'v':
+		if f.Flag('+') {
+			_, _ = fmt.Fprintf(f, "%s", e.VerboseFormatter().Format())
+			return
+		}
+		_, _ = fmt.Fprintf(f, "%s", e.Error())
+	case 's':
+		_, _ = fmt.Fprintf(f, "%s", e.Error())
+	case 'q':
+		_, _ = fmt.Fprintf(f, "%q", e.Error())
+	}
+}
+
 func (e *FaultError) JsonFormatter() ErrorFormatter {
 	return JsonFormatter{
-		faultType:  e.faultType,
+		errorType:  e.errorType,
 		err:        e.err,
 		stacktrace: e.stacktrace,
 		when:       e.when,
@@ -216,9 +212,10 @@ func (e *FaultError) JsonFormatter() ErrorFormatter {
 	}
 }
 
-func (e *FaultError) TextFormatter() ErrorFormatter {
-	return TextFormatter{
-		faultType:  e.faultType,
+func (e *FaultError) VerboseFormatter() ErrorFormatter {
+	return VerboseFormatter{
+		title:      "main_error",
+		errorType:  e.errorType,
 		err:        e.err,
 		stacktrace: e.stacktrace,
 		when:       e.when,
@@ -226,4 +223,65 @@ func (e *FaultError) TextFormatter() ErrorFormatter {
 		tags:       e.tags,
 		subErrors:  e.subErrors,
 	}
+}
+
+// IsTYpe() checks whether the given error or any of its wrapped errors is of the specified ErrorType.
+// errors.Is() checks for error equality, but this function checks for error type.
+func IsType(err error, t ErrorType) bool {
+	if err == nil {
+		return false
+	}
+	fe, ok := err.(Typer)
+	if ok && fe.Type() == t {
+		return true
+	}
+
+	switch x := err.(type) {
+	case interface{ Unwrap() error }:
+		return IsType(x.Unwrap(), t)
+	case interface{ Unwrap() []error }:
+		for _, subErr := range x.Unwrap() {
+			if IsType(subErr, t) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+/*********************
+	Interfaces
+ *********************/
+
+type Fault interface {
+	error
+	Unwrap() error
+	Type() ErrorType
+	When() *time.Time
+	RequestID() string
+	StackTrace() StackTrace
+
+	SetErr(err error) Fault
+	SetType(errorType ErrorType) Fault
+	SetWhen(t time.Time) Fault
+	SetRequestID(requestID string) Fault
+	WithStackTrace() Fault // auto set stack trace
+	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
+	AddTagSafe(key string, value TagValue) Fault
+	DeleteTag(key string) Fault
+	AddSubError(errs ...error) Fault
+
+	JsonString() string
+}
+
+type Typer interface {
+	Type() ErrorType
+}
+
+type StackTracer interface {
+	StackTrace() StackTrace
+}
+
+type JsonStringer interface {
+	JsonString() string
 }

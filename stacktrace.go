@@ -54,7 +54,7 @@ type StackTraceItem struct {
 }
 
 func (item StackTraceItem) String() string {
-	return fmt.Sprintf("%s:%d %s", item.File, item.Line, item.Function)
+	return fmt.Sprintf("%s() %s:%d", item.Function, item.File, item.Line)
 }
 
 func NewStackTraceItem(f runtime.Frame) StackTraceItem {

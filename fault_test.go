@@ -2,6 +2,7 @@ package fault
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"testing"
 	"time"
@@ -11,8 +12,8 @@ func assertFaultError(t *testing.T, got, expected *FaultError) {
 	if got.err != expected.err {
 		t.Errorf("expected err %v, got %v", expected.err, got.err)
 	}
-	if got.faultType != expected.faultType {
-		t.Errorf("expected faultType %v, got %v", expected.faultType, got.faultType)
+	if got.errorType != expected.errorType {
+		t.Errorf("expected errorType %v, got %v", expected.errorType, got.errorType)
 	}
 	if got.when == nil || expected.when == nil {
 		if got.when != expected.when {
@@ -49,8 +50,8 @@ func assertFaultErrorWithErrorValue(t *testing.T, got, expected *FaultError) {
 			t.Errorf("expected err %v, got %v", expected.err, got.err)
 		}
 	}
-	if got.faultType != expected.faultType {
-		t.Errorf("expected faultType %v, got %v", expected.faultType, got.faultType)
+	if got.errorType != expected.errorType {
+		t.Errorf("expected errorType %v, got %v", expected.errorType, got.errorType)
 	}
 	if got.when == nil || expected.when == nil {
 		if got.when != expected.when {
@@ -89,12 +90,12 @@ func TestFaultError_Type(t *testing.T) {
 	testCases := []struct {
 		label    string
 		err      *FaultError
-		expected FaultType
+		expected ErrorType
 	}{
 		{
 			label:    "initial type",
 			err:      &FaultError{},
-			expected: FaultTypeNone,
+			expected: ErrorTypeNone,
 		},
 	}
 
@@ -237,7 +238,7 @@ func TestFaultError_Setters(t *testing.T) {
 					SetErr(stdErr)
 			},
 			expected: &FaultError{
-				faultType: "testType",
+				errorType: "testType",
 				when: func() *time.Time {
 					t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 					return &t
@@ -444,7 +445,7 @@ func TestFaultError_Error(t *testing.T) {
 func TestNewRawFaultError(t *testing.T) {
 	stdErr := errors.New("standard error")
 	expected := &FaultError{
-		faultType:  FaultTypeNone,
+		errorType:  ErrorTypeNone,
 		err:        stdErr,
 		stacktrace: make(StackTrace, 0),
 		when:       nil,
@@ -467,12 +468,12 @@ func TestNew(t *testing.T) {
 			label:   "basic fault error",
 			message: "fault occurred",
 			expected: &FaultError{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       errors.New("fault occurred"),
 				stacktrace: []StackTraceItem{
 					{
 						File:     "ignored",
-						Line:     499,
+						Line:     500,
 						Function: "github.com/hinoguma/go-fault.TestNew.func1",
 					},
 					{
@@ -496,7 +497,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := New(tc.message) // 499
+			got := New(tc.message) // 500
 			assertFaultErrorWithErrorValue(t, got, tc.expected)
 		})
 	}
@@ -514,7 +515,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 	faultErr := &FaultError{
-		faultType: FaultTypeNone,
+		errorType: ErrorTypeNone,
 		err:       stdErr,
 	}
 
@@ -526,7 +527,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 		{
 			label: "all props",
 			err: &FaultError{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
@@ -548,7 +549,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 				subErrors: []error{stdErr, faultErr},
 			},
 			expected: JsonFormatter{
-				faultType: FaultTypeNone,
+				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
@@ -577,6 +578,103 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 			got := tc.err.JsonFormatter()
 			if !reflect.DeepEqual(got, tc.expected) {
 				t.Errorf("expected JsonFormat %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestFaultError_JsonString(t *testing.T) {
+	stdErr := errors.New("go standard error")
+	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
+	faultErr := &FaultError{
+		errorType: ErrorTypeNone,
+		err:       errors.New("go standard error2"),
+	}
+
+	testCases := []struct {
+		label    string
+		err      *FaultError
+		expected string
+	}{
+		{
+			label: "all props",
+			err: &FaultError{
+				errorType: ErrorTypeNone,
+				err:       stdErr,
+				stacktrace: StackTrace{
+					{
+						File:     "fault_test.go",
+						Line:     75,
+						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonString",
+					},
+				},
+				when:      &when,
+				requestId: "12345",
+				tags: Tags{
+					tags: []Tag{
+						{Key: "tag1", Value: StringTagValue("value1")},
+					},
+					keyMap: map[string]int{
+						"tag1": 0,
+					},
+				},
+				subErrors: []error{stdErr, faultErr},
+			},
+			expected: `{"type":"none","message":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1"},"stacktrace":[{"file":"fault_test.go","line":75,"function":"github.com/hinoguma/go-fault.TestFaultError_JsonString"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.err.JsonString()
+			if got != tc.expected {
+				t.Errorf("expected JsonString %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestFaultError_Format(t *testing.T) {
+
+	testCases := []struct {
+		label         string
+		err           *FaultError
+		expectedS     string
+		expectedV     string
+		expectedVPlus string
+		expectedQ     string
+	}{
+		{
+			label: "basic format",
+			err: &FaultError{
+				errorType: ErrorTypeNone,
+				err:       errors.New("basic error"),
+			},
+			expectedS: "[Type: none] basic error",
+			expectedV: "[Type: none] basic error",
+			expectedVPlus: `main_error:
+    message: basic error
+    type: none`,
+			expectedQ: `"[Type: none] basic error"`,
+		},
+	}
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			gotS := fmt.Sprintf("%s", tc.err)
+			if gotS != tc.expectedS {
+				t.Errorf("expectedS format %v, got %v", tc.expectedS, gotS)
+			}
+			gotV := fmt.Sprintf("%v", tc.err)
+			if gotV != tc.expectedV {
+				t.Errorf("expectedV format %v, got %v", tc.expectedV, gotV)
+			}
+			gotVPlus := fmt.Sprintf("%+v", tc.err)
+			if gotVPlus != tc.expectedVPlus {
+				t.Errorf("expectedVPlus format %v, got %v", tc.expectedVPlus, gotVPlus)
+			}
+			gotT := fmt.Sprintf("%q", tc.err)
+			if gotT != tc.expectedQ {
+				t.Errorf("expectedQ format %v, got %v", tc.expectedQ, gotT)
 			}
 		})
 	}

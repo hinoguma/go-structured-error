@@ -25,8 +25,18 @@ func (e *testCustomError2) Error() string {
 	return "error code: " + strconv.Itoa(e.code)
 }
 
+const testErrorType3 fault.ErrorType = "testCustomError3"
+
 type testCustomError3 struct {
 	fault.FaultError
+}
+
+func newTestCustomError3() *testCustomError3 {
+	err := &testCustomError3{
+		FaultError: fault.FaultError{},
+	}
+	_ = err.SetType(testErrorType3)
+	return err
 }
 
 func assertEqualsFaultWithoutStackTrace(t *testing.T, got, expected fault.Fault) {
@@ -346,6 +356,82 @@ func TestWrap(t *testing.T) {
 	}
 }
 
+func TestLift(t *testing.T) {
+	testCases := []struct {
+		label    string
+		err      error
+		expected error
+	}{
+		{
+			label:    "wrap standard error",
+			err:      errStd,
+			expected: fault.NewRawFaultError(errStd),
+		},
+		{
+			label:    "wrap nil error",
+			err:      nil,
+			expected: nil,
+		},
+		{
+			label: "wrap fault error",
+			err:   fault.New("Original fault error"),
+			expected: func() error {
+				fe := fault.New("Original fault error")
+				return fe
+			}(),
+		},
+		{
+			label: "wrap custom error",
+			err:   testCustomError{msg: "custom error occurred"},
+			expected: func() error {
+				fe := fault.NewRawFaultError(testCustomError{msg: "custom error occurred"})
+				return fe
+			}(),
+		},
+		{
+			label: "wrap custom error implementing error interface",
+			err: func() error {
+				err := &testCustomError3{}
+				_ = err.SetErr(errStd)
+				return err
+			}(),
+			expected: func() error {
+				err := &testCustomError3{}
+				_ = err.SetErr(errStd)
+				return err
+			}(),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := Lift(tc.err)
+			if tc.expected == nil || got == nil {
+				if tc.expected != got {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			expectedFe, expectedOk := tc.expected.(fault.Fault)
+			fe, gotOk := got.(fault.Fault)
+			if expectedOk != gotOk {
+				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+			}
+			if expectedOk && gotOk {
+				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+			} else {
+				if !reflect.DeepEqual(got, tc.expected) {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			if len(fe.StackTrace()) == 0 {
+				t.Errorf("expected stack trace to be set, but it was empty")
+			}
+		})
+	}
+}
+
 func TestNew(t *testing.T) {
 	testCases := []struct {
 		label    string
@@ -394,6 +480,141 @@ func TestNew(t *testing.T) {
 			}
 			if len(fe.StackTrace()) == 0 {
 				t.Errorf("expected stack trace to be set, but it was empty")
+			}
+		})
+	}
+}
+
+type causerTestError struct {
+	msg   string
+	cause error
+}
+
+func (e *causerTestError) Error() string {
+	return e.msg
+}
+
+func (e *causerTestError) Cause() error {
+	return e.cause
+}
+
+func TestCause(t *testing.T) {
+	err1 := errors.New("root cause error")
+	wrappedErr := fmt.Errorf("wrapped: %w", err1)
+	faultNilErr := fault.NewRawFaultError(nil)
+	joinedErr := errors.Join(err1, errors.New("another error"))
+	causerErr := &causerTestError{
+		msg:   "causer error",
+		cause: err1,
+	}
+	testCases := []struct {
+		label    string
+		err      error
+		expected error
+	}{
+		{
+			label:    "simple wrapped error",
+			err:      wrappedErr,
+			expected: err1,
+		},
+		{
+			label:    "non-wrapped error",
+			err:      err1,
+			expected: err1,
+		},
+		{
+			label:    "nil error",
+			err:      nil,
+			expected: nil,
+		},
+		{
+			label:    "fault error has error inside",
+			err:      fault.NewRawFaultError(err1),
+			expected: err1,
+		},
+		{
+			label:    "fault error wrapping another error",
+			err:      fault.NewRawFaultError(wrappedErr),
+			expected: err1,
+		},
+		{
+			label:    "fault error has nil inside",
+			err:      faultNilErr,
+			expected: faultNilErr,
+		},
+		{
+			label:    "joined errors",
+			err:      joinedErr,
+			expected: joinedErr,
+		},
+		{
+			label:    "wrapped joined errors",
+			err:      fmt.Errorf("wrapping: %w", joinedErr),
+			expected: joinedErr,
+		},
+		{
+			label:    "causer error",
+			err:      causerErr,
+			expected: err1,
+		},
+		{
+			label:    "wrapped causer error",
+			err:      fmt.Errorf("wrapping: %w", causerErr),
+			expected: err1,
+		},
+		{
+			label: "complex wrapping with causer and fault",
+			err: func() error {
+				fe := fault.NewRawFaultError(causerErr)
+				return fmt.Errorf("outer wrap: %w", fe)
+			}(),
+			expected: err1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := Cause(tc.err)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestIsType(t *testing.T) {
+	// already tested in fault.fault_is_test.go
+	testCases := []struct {
+		label    string
+		err      error
+		errType  fault.ErrorType
+		expected bool
+	}{
+		{
+			label:    "nil error",
+			err:      nil,
+			errType:  fault.ErrorTypeNone,
+			expected: false,
+		},
+		{
+			label:    "fault error with matching type",
+			err:      New("test error"),
+			errType:  fault.ErrorTypeNone,
+			expected: true,
+		},
+		{
+			label:    "fault error with non-matching type",
+			err:      New("test error"),
+			errType:  "custom_type",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := IsType(tc.err, tc.errType)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
 			}
 		})
 	}

@@ -1,14 +1,21 @@
 package fault
 
-import "time"
+import (
+	"strconv"
+	"strings"
+	"time"
+)
 
 type ErrorFormatter interface {
 	Format() string
 }
 
+const NoErrStr string = "<no error>"
+const indentation string = "    "
+
 type JsonFormatter struct {
 	// required
-	faultType  FaultType
+	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
 
@@ -21,7 +28,7 @@ type JsonFormatter struct {
 
 func (f JsonFormatter) Format() string {
 	jsonStr := "{"
-	jsonStr += `"type":"` + f.faultType.StringWithDefaultNone() + `"`
+	jsonStr += `"type":"` + f.errorType.StringWithDefaultNone() + `"`
 	if f.err == nil {
 		jsonStr += `,"message":""`
 	} else {
@@ -54,7 +61,7 @@ func (f JsonFormatter) Format() string {
 				jf = fe.JsonFormatter()
 			} else {
 				jf = JsonFormatter{
-					faultType: FaultTypeNone,
+					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
 			}
@@ -69,9 +76,10 @@ func (f JsonFormatter) Format() string {
 	return jsonStr
 }
 
-type TextFormatter struct {
+type VerboseFormatter struct {
 	// required
-	faultType  FaultType
+	title      string
+	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
 
@@ -82,52 +90,65 @@ type TextFormatter struct {
 	subErrors []error
 }
 
-func (f TextFormatter) Format() string {
-	txt := "[" + "Type:" + f.faultType.StringWithDefaultNone() + "] "
-	if f.err == nil {
-		txt += "[Error:<no error>]"
-	} else {
-		txt += "[Error:" + f.err.Error() + "]"
-	}
-	if f.when != nil {
-		txt += " [When:" + f.when.Format(time.RFC3339) + "]"
-	}
-	if f.requestId != "" {
-		txt += " [RequestId:" + f.requestId + "]"
-	}
-	if len(f.tags.tags) > 0 {
-		txt += "\n[Tags:\n"
-		for _, value := range f.tags.tags {
-			txt += " | " + value.String() + "\n"
-		}
-		txt += "]"
-	}
-	if len(f.stacktrace) > 0 {
-		txt += "\n[StackTraces:\n"
-		for _, item := range f.stacktrace {
-			txt += " | " + item.String() + "\n"
-		}
-		txt += "]"
-	}
-	txt += "\n----end\n"
+func (f VerboseFormatter) Format() string {
+
+	txt := ""
+	txt += f.formatMain()
 
 	if len(f.subErrors) > 0 {
-		for _, subErr := range f.subErrors {
+		for i, subErr := range f.subErrors {
 			if subErr == nil {
 				continue
 			}
-			fe, ok := subErr.(interface{ TextFormatter() ErrorFormatter })
-			var subFormatter TextFormatter
+			fe, ok := subErr.(interface{ VerboseFormatter() ErrorFormatter })
+			var subFormatter VerboseFormatter
 			if ok {
-				subFormatter = fe.TextFormatter().(TextFormatter)
+				subFormatter = fe.VerboseFormatter().(VerboseFormatter)
 			} else {
-				subFormatter = TextFormatter{
-					faultType: FaultTypeNone,
+				subFormatter = VerboseFormatter{
+					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
 			}
-			txt += subFormatter.Format()
+			subFormatter.title = f.title + ".sub" + strconv.Itoa(i+1)
+			txt += "\n" + subFormatter.Format()
 		}
 	}
+	return txt
+}
+
+func (f VerboseFormatter) formatMain() string {
+	txt := ""
+	if f.err == nil {
+		txt += "\n" + "message: " + NoErrStr
+	} else {
+		txt += "\n" + "message: " + f.err.Error()
+	}
+	txt += "\n" + "type: " + f.errorType.StringWithDefaultNone()
+
+	if f.when != nil {
+		txt += "\n" + "when: " + f.when.Format(time.RFC3339)
+	}
+	if f.requestId != "" {
+		txt += "\n" + "request_id: " + f.requestId
+	}
+
+	// tags
+	if len(f.tags.tags) > 0 {
+		txt += "\n" + "tags:"
+		for _, tag := range f.tags.tags {
+			txt += "\n" + indentation + tag.Key + ": " + tag.Value.String()
+		}
+	}
+
+	if len(f.stacktrace) > 0 {
+		txt += "\n" + "stacktrace:"
+		for _, frame := range f.stacktrace {
+			txt += "\n" + indentation + frame.String()
+		}
+	}
+
+	txt = strings.ReplaceAll(txt, "\n", "\n"+indentation)
+	txt = f.title + ":" + txt
 	return txt
 }

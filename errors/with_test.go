@@ -10,12 +10,9 @@ import (
 )
 
 const (
-	LineTraceLevel1             = 25
-	LineTraceLevel2             = 33
-	LineTraceLevel3             = 39
-	LineTraceLevel4             = 46
-	LineTraceLevel5             = 50
-	LineStackTraceWithSkipDepth = 46
+	LineTraceLevel4             = 43
+	LineTraceLevel5             = 47
+	LineStackTraceWithSkipDepth = 37
 )
 
 func traceLevel1(w *WithWrapper, skip int, depth int, level int) {
@@ -161,7 +158,7 @@ func TestWithWrapper_StackTrace(t *testing.T) {
 	expected := fault.StackTrace{
 		{
 			File:     "ignored",
-			Line:     150,
+			Line:     147,
 			Function: "github.com/hinoguma/go-fault/errors.TestWithWrapper_StackTrace",
 		},
 		{
@@ -187,10 +184,7 @@ func TestWithWrapper_StackTrace(t *testing.T) {
 }
 
 var errStd = errors.New("standard error")
-
-type testCustomFaultError struct {
-	fault.FaultError
-}
+var errC3 = newTestCustomError3()
 
 func assertEqualsStackTraceItem(t *testing.T, got, expected fault.StackTraceItem, filterPrefix string) {
 	// only check traces from this package
@@ -219,44 +213,6 @@ func assertEqualsStackTrace(t *testing.T, got, expected fault.StackTrace, filter
 	}
 }
 
-func TestWithWrapper_convertToFault(t *testing.T) {
-	testCases := []struct {
-		label    string
-		wrapper  *WithWrapper
-		expected fault.Fault
-	}{
-		{
-			label:    "nil error",
-			wrapper:  With(nil),
-			expected: nil,
-		},
-		{
-			label:    "go standard error",
-			wrapper:  With(errStd),
-			expected: fault.NewRawFaultError(errStd),
-		},
-		{
-			label:    "fault error",
-			wrapper:  With(fault.NewRawFaultError(errStd)),
-			expected: fault.NewRawFaultError(errStd),
-		},
-		{
-			label:    "custom fault error",
-			wrapper:  With(&testCustomFaultError{}),
-			expected: &testCustomFaultError{},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.label, func(t *testing.T) {
-			err := tc.wrapper.convertToFault()
-			if !reflect.DeepEqual(tc.expected, err) {
-				t.Errorf("expected %v, got %v", tc.expected, err)
-			}
-		})
-	}
-}
-
 func TestWithWrapper_Err(t *testing.T) {
 	testCases := []struct {
 		label    string
@@ -271,7 +227,7 @@ func TestWithWrapper_Err(t *testing.T) {
 		{
 			label:    "go standard error",
 			wrapper:  With(errStd),
-			expected: errStd,
+			expected: fault.NewRawFaultError(errStd),
 		},
 		{
 			label:    "fault error",
@@ -333,7 +289,7 @@ func TestWithWrapper_Type(t *testing.T) {
 	testCases := []struct {
 		label    string
 		wrapper  *WithWrapper
-		value    fault.FaultType
+		value    fault.ErrorType
 		expected error
 	}{
 		{
@@ -443,6 +399,118 @@ func TestWithWrapper_AddTagSafe(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			err := tc.wrapper.AddTagSafe(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagString(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    string
+		expected error
+	}{
+		{
+			label:   "string",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   "value1",
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.StringTagValue("value1")),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagString(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagInt(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    int
+		expected error
+	}{
+		{
+			label:   "int",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   42,
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.IntTagValue(42)),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagInt(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagFloat(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    float64
+		expected error
+	}{
+		{
+			label:   "int",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   42,
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.FloatTagValue(42)),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagFloat(tc.key, tc.value).Err()
+			if !reflect.DeepEqual(tc.expected, err) {
+				t.Errorf("expected %v, got %v", tc.expected, err)
+			}
+		})
+	}
+}
+
+func TestWithWrapper_AddTagBool(t *testing.T) {
+	testCases := []struct {
+		label    string
+		wrapper  *WithWrapper
+		key      string
+		value    bool
+		expected error
+	}{
+		{
+			label:   "bool",
+			wrapper: With(errStd),
+			key:     "key1",
+			value:   true,
+			expected: fault.NewRawFaultError(errStd).
+				AddTagSafe("key1", fault.BoolTagValue(true)),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			err := tc.wrapper.AddTagBool(tc.key, tc.value).Err()
 			if !reflect.DeepEqual(tc.expected, err) {
 				t.Errorf("expected %v, got %v", tc.expected, err)
 			}

@@ -339,7 +339,7 @@ func TestStackTraceItem_String(t *testing.T) {
 				Line:     42,
 				Function: "myFunction",
 			},
-			expected: "file.go:42 myFunction",
+			expected: "myFunction() file.go:42",
 		},
 	}
 

@@ -6,12 +6,12 @@ import (
 	"testing"
 )
 
-const testErrorType1 FaultType = "testCustom1"
+const testErrorType1 ErrorType = "testCustom1"
 
 func newTestCustomFaultError1(code int) *testCustomFaultError1 {
 	return &testCustomFaultError1{
 		FaultError: FaultError{
-			faultType: testErrorType1,
+			errorType: testErrorType1,
 		},
 		code: code,
 	}
@@ -66,6 +66,8 @@ func TestFaultError_Is(t *testing.T) {
 		6. CB has NE is CB has dif NE -> false
 		7. CB has NE us is FE has same NE -> false
 		8. FE has nil target is nil -> false
+
+		9. FE has NE is NE -> true
 		*/
 		{
 			label:    "1. FE has NE is FE has same NE -> true",
@@ -115,6 +117,12 @@ func TestFaultError_Is(t *testing.T) {
 			target:   nil,
 			expected: false,
 		},
+		{
+			label:    "9. NE is FE has same NE -> true",
+			err:      &FaultError{err: ne},
+			target:   ne,
+			expected: true,
+		},
 	}
 
 	for _, tc := range testCases {
@@ -122,6 +130,74 @@ func TestFaultError_Is(t *testing.T) {
 			result := errors.Is(tc.err, tc.target)
 			if result != tc.expected {
 				t.Errorf("expected Is result %v, got %v", tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestIsType(t *testing.T) {
+
+	testCases := []struct {
+		label    string
+		err      error
+		target   ErrorType
+		expected bool
+	}{
+		{
+			label:    "Initial FE is None -> true",
+			err:      &FaultError{},
+			target:   ErrorTypeNone,
+			expected: true,
+		},
+		{
+			label:    "Initial FE is testCustom1 -> true",
+			err:      &FaultError{},
+			target:   testErrorType1,
+			expected: false,
+		},
+		{
+			label:    "FE with type testCustom1 -> true",
+			err:      &FaultError{errorType: testErrorType1},
+			target:   testErrorType1,
+			expected: true,
+		},
+		{
+			label:    "testCustom1 is testCustom1 -> true",
+			err:      newTestCustomFaultError1(100),
+			target:   testErrorType1,
+			expected: true,
+		},
+		{
+			label:    "testCustom1 is None -> false",
+			err:      newTestCustomFaultError1(100),
+			target:   ErrorTypeNone,
+			expected: false,
+		},
+		{
+			label:    "non-Fault error is None -> false",
+			err:      errors.New("standard go error"),
+			target:   ErrorTypeNone,
+			expected: false,
+		},
+		{
+			label:    "warped FaultError with type testCustom1 is None -> false",
+			err:      fmt.Errorf("wrapping fault error: %w", newTestCustomFaultError1(100)),
+			target:   ErrorTypeNone,
+			expected: false,
+		},
+		{
+			label:    "warped FaultError with type testCustom1 is testCustom1 -> true",
+			err:      fmt.Errorf("wrapping fault error: %w", newTestCustomFaultError1(100)),
+			target:   testErrorType1,
+			expected: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			result := IsType(tc.err, tc.target)
+			if result != tc.expected {
+				t.Errorf("expected IsType result %v, got %v", tc.expected, result)
 			}
 		})
 	}
