@@ -22,7 +22,7 @@ func (w *WithWrapper) Err() error {
 
 // set stack trace starting from caller of StackTrace method
 func (w *WithWrapper) StackTrace() *WithWrapper {
-	return w.StackTraceWithSkipDepth(2, fault.GetMaxDepthStackTrace())
+	return w.StackTraceWithSkipDepth(2, fault.MaxStackTraceDepth)
 }
 
 // if skip is negative, it will be treated as 0

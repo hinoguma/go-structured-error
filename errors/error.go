@@ -10,7 +10,7 @@ import (
 func New(text string) error {
 	err := fault.NewRawFaultError((stderrors.New(text)))
 	// set stack trace starting from caller of New
-	_ = err.SetStackTraceWithSkipMaxDepth(2, fault.GetMaxDepthStackTrace())
+	_ = err.SetStackTraceWithSkipMaxDepth(2, fault.MaxStackTraceDepth)
 	return err
 }
 

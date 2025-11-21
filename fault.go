@@ -9,7 +9,7 @@ import (
 func New(message string) *FaultError {
 	err := NewRawFaultError(errors.New(message))
 	// set stack trace starting from caller of NewFaultError
-	_ = err.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace())
+	_ = err.SetStackTraceWithSkipMaxDepth(2, MaxStackTraceDepth)
 	return err
 }
 
@@ -120,7 +120,7 @@ func (e *FaultError) SetRequestID(requestID string) Fault {
 
 // WithStackTrace sets stack trace starting from caller of WithStackTrace
 func (e *FaultError) WithStackTrace() Fault {
-	return e.SetStackTraceWithSkipMaxDepth(2, GetMaxDepthStackTrace()) // skip 4 to start at caller of WithStackTrace
+	return e.SetStackTraceWithSkipMaxDepth(2, MaxStackTraceDepth) // skip 2 to start at caller of WithStackTrace
 }
 
 func (e *FaultError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault {
