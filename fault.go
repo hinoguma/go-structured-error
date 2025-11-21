@@ -57,7 +57,7 @@ type FaultError struct {
 }
 
 func (e *FaultError) Error() string {
-	m := "<no error>"
+	m := NoErrStr
 	if e.err != nil {
 		m = e.err.Error()
 	}
@@ -214,6 +214,7 @@ func (e *FaultError) JsonFormatter() ErrorFormatter {
 
 func (e *FaultError) TextFormatter() ErrorFormatter {
 	return TextFormatter{
+		title:      "main_error",
 		errorType:  e.errorType,
 		err:        e.err,
 		stacktrace: e.stacktrace,

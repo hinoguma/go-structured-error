@@ -124,7 +124,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 	}
 }
 
-func TestTextFormatter_Format(t *testing.T) {
+func TestTextFormatter_formatMain(t *testing.T) {
 	testCases := []struct {
 		label     string
 		formatter TextFormatter
@@ -133,6 +133,7 @@ func TestTextFormatter_Format(t *testing.T) {
 		{
 			label: "required fields",
 			formatter: TextFormatter{
+				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
 				stacktrace: StackTrace{
@@ -150,17 +151,17 @@ func TestTextFormatter_Format(t *testing.T) {
 				when:      nil,
 				requestId: "",
 			},
-			expected: `[Type:none] [Error:test error]
-[StackTraces:
- | example.go:10 main.exampleFunction
- | example.go:20 main.anotherFunction
-]
-----end
-`,
+			expected: `main_error:
+    message: test error
+    type: none
+    stacktrace:
+        main.exampleFunction() example.go:10
+        main.anotherFunction() example.go:20`,
 		},
 		{
 			label: "with when and requestId",
 			formatter: TextFormatter{
+				title:      "sub_error1",
 				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
 				stacktrace: make(StackTrace, 0),
@@ -170,13 +171,16 @@ func TestTextFormatter_Format(t *testing.T) {
 				}(),
 				requestId: "req-12345",
 			},
-			expected: `[Type:testType] [Error:another error] [When:2024-01-01T12:00:00Z] [RequestId:req-12345]
-----end
-`,
+			expected: `sub_error1:
+    message: another error
+    type: testType
+    when: 2024-01-01T12:00:00Z
+    request_id: req-12345`,
 		},
 		{
 			label: "tags",
 			formatter: TextFormatter{
+				title:      "sub_error2",
 				err:        errors.New("error with tags"),
 				stacktrace: make(StackTrace, 0),
 				when:       nil,
@@ -192,17 +196,17 @@ func TestTextFormatter_Format(t *testing.T) {
 					},
 				},
 			},
-			expected: `[Type:none] [Error:error with tags]
-[Tags:
- | key:session_id value:sess-456
- | key:user_id value:user-789
-]
-----end
-`,
+			expected: `sub_error2:
+    message: error with tags
+    type: none
+    tags:
+        session_id: sess-456
+        user_id: user-789`,
 		},
 		{
 			label: "empty tags",
 			formatter: TextFormatter{
+				title:      "sub_error3",
 				err:        errors.New("error with empty tags"),
 				stacktrace: make(StackTrace, 0),
 				when:       nil,
@@ -212,13 +216,67 @@ func TestTextFormatter_Format(t *testing.T) {
 					keyMap: map[string]int{},
 				},
 			},
-			expected: `[Type:none] [Error:error with empty tags]
-----end
-`,
+			expected: `sub_error3:
+    message: error with empty tags
+    type: none`,
 		},
 		{
-			label: "sub errors",
+			label: "empty",
 			formatter: TextFormatter{
+				title:      "main_error",
+				err:        nil,
+				stacktrace: nil,
+				when:       nil,
+				requestId:  "",
+			},
+			expected: `main_error:
+    message: <no error>
+    type: none`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := tc.formatter.formatMain()
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestTextFormatter_Format(t *testing.T) {
+	testCases := []struct {
+		label     string
+		formatter TextFormatter
+		expected  string
+	}{
+		{
+			label: "not sub errors",
+			formatter: TextFormatter{
+				title:     "main_error",
+				errorType: ErrorTypeNone,
+				err:       errors.New("test error"),
+				stacktrace: StackTrace{
+					{
+						File:     "example.go",
+						Line:     10,
+						Function: "main.exampleFunction",
+					},
+				},
+				when:      nil,
+				requestId: "",
+			},
+			expected: `main_error:
+    message: test error
+    type: none
+    stacktrace:
+        main.exampleFunction() example.go:10`,
+		},
+		{
+			label: "with sub errors",
+			formatter: TextFormatter{
+				title:      "main_error",
 				err:        errors.New("main error"),
 				stacktrace: make(StackTrace, 0),
 				when:       nil,
@@ -231,31 +289,37 @@ func TestTextFormatter_Format(t *testing.T) {
 						stacktrace: StackTrace{
 							{File: "sub_example.go", Line: 30, Function: "subFunction"},
 						},
+						subErrors: []error{
+							errors.New("nested sub error"),
+							&FaultError{
+								err: errors.New("nested sub error 2"),
+								stacktrace: StackTrace{
+									{File: "sub_example.go", Line: 50, Function: "subFunction"},
+								},
+							},
+						},
 					},
 				},
 			},
-			expected: `[Type:none] [Error:main error]
-----end
-[Type:none] [Error:sub error 1]
-----end
-[Type:testType2] [Error:sub error 2]
-[StackTraces:
- | sub_example.go:30 subFunction
-]
-----end
-`,
-		},
-		{
-			label: "empty",
-			formatter: TextFormatter{
-				err:        nil,
-				stacktrace: nil,
-				when:       nil,
-				requestId:  "",
-			},
-			expected: `[Type:none] [Error:<no error>]
-----end
-`,
+			expected: `main_error:
+    message: main error
+    type: none
+main_error.sub1:
+    message: sub error 1
+    type: none
+main_error.sub2:
+    message: sub error 2
+    type: testType2
+    stacktrace:
+        subFunction() sub_example.go:30
+main_error.sub2.sub1:
+    message: nested sub error
+    type: none
+main_error.sub2.sub2:
+    message: nested sub error 2
+    type: none
+    stacktrace:
+        subFunction() sub_example.go:50`,
 		},
 	}
 

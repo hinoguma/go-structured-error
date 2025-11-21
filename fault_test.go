@@ -473,7 +473,7 @@ func TestNew(t *testing.T) {
 				stacktrace: []StackTraceItem{
 					{
 						File:     "ignored",
-						Line:     499,
+						Line:     500,
 						Function: "github.com/hinoguma/go-fault.TestNew.func1",
 					},
 					{
@@ -497,7 +497,7 @@ func TestNew(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := New(tc.message) // 499
+			got := New(tc.message) // 500
 			assertFaultErrorWithErrorValue(t, got, tc.expected)
 		})
 	}
@@ -650,10 +650,12 @@ func TestFaultError_Format(t *testing.T) {
 				errorType: ErrorTypeNone,
 				err:       errors.New("basic error"),
 			},
-			expectedS:     "[Type: none] basic error",
-			expectedV:     "[Type: none] basic error",
-			expectedVPlus: "[Type:none] [Error:basic error]\n----end\n",
-			expectedQ:     `"[Type: none] basic error"`,
+			expectedS: "[Type: none] basic error",
+			expectedV: "[Type: none] basic error",
+			expectedVPlus: `main_error:
+    message: basic error
+    type: none`,
+			expectedQ: `"[Type: none] basic error"`,
 		},
 	}
 	for _, tc := range testCases {

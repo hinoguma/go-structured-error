@@ -1,10 +1,17 @@
 package fault
 
-import "time"
+import (
+	"strconv"
+	"strings"
+	"time"
+)
 
 type ErrorFormatter interface {
 	Format() string
 }
+
+const NoErrStr string = "<no error>"
+const indentation string = "    "
 
 type JsonFormatter struct {
 	// required
@@ -71,6 +78,7 @@ func (f JsonFormatter) Format() string {
 
 type TextFormatter struct {
 	// required
+	title      string
 	errorType  ErrorType
 	err        error
 	stacktrace StackTrace
@@ -83,36 +91,12 @@ type TextFormatter struct {
 }
 
 func (f TextFormatter) Format() string {
-	txt := "[" + "Type:" + f.errorType.StringWithDefaultNone() + "] "
-	if f.err == nil {
-		txt += "[Error:<no error>]"
-	} else {
-		txt += "[Error:" + f.err.Error() + "]"
-	}
-	if f.when != nil {
-		txt += " [When:" + f.when.Format(time.RFC3339) + "]"
-	}
-	if f.requestId != "" {
-		txt += " [RequestId:" + f.requestId + "]"
-	}
-	if len(f.tags.tags) > 0 {
-		txt += "\n[Tags:\n"
-		for _, value := range f.tags.tags {
-			txt += " | " + value.String() + "\n"
-		}
-		txt += "]"
-	}
-	if len(f.stacktrace) > 0 {
-		txt += "\n[StackTraces:\n"
-		for _, item := range f.stacktrace {
-			txt += " | " + item.String() + "\n"
-		}
-		txt += "]"
-	}
-	txt += "\n----end\n"
+
+	txt := ""
+	txt += f.formatMain()
 
 	if len(f.subErrors) > 0 {
-		for _, subErr := range f.subErrors {
+		for i, subErr := range f.subErrors {
 			if subErr == nil {
 				continue
 			}
@@ -126,8 +110,50 @@ func (f TextFormatter) Format() string {
 					err:       subErr,
 				}
 			}
-			txt += subFormatter.Format()
+			subFormatter.title = f.title + ".sub" + strconv.Itoa(i+1)
+			txt += "\n" + subFormatter.Format()
 		}
 	}
+	return txt
+}
+
+func (f TextFormatter) formatMain() string {
+	txt := ""
+	if f.err == nil {
+		txt += "\n" + "message: " + NoErrStr
+	} else {
+		txt += "\n" + "message: " + f.err.Error()
+	}
+	txt += "\n" + "type: " + f.errorType.StringWithDefaultNone()
+
+	if f.when != nil {
+		txt += "\n" + "when: " + f.when.Format(time.RFC3339)
+	}
+	if f.requestId != "" {
+		txt += "\n" + "request_id: " + f.requestId
+	}
+
+	// remove the last newline
+	if strings.HasSuffix(txt, "\n") {
+		txt = txt[:len(txt)-1]
+	}
+
+	// tags
+	if len(f.tags.tags) > 0 {
+		txt += "\n" + "tags:"
+		for _, tag := range f.tags.tags {
+			txt += "\n" + indentation + tag.Key + ": " + tag.Value.String()
+		}
+	}
+
+	if len(f.stacktrace) > 0 {
+		txt += "\n" + "stacktrace:"
+		for _, frame := range f.stacktrace {
+			txt += "\n" + indentation + frame.String()
+		}
+	}
+
+	txt = strings.Replace(txt, "\n", "\n"+indentation, -1)
+	txt = f.title + ":" + txt
 	return txt
 }
