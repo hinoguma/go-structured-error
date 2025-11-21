@@ -65,6 +65,7 @@ fmt.Printf("%+v", originalErr)
 //     /path/to/your/file.go:15
 ```
 
+
 if the error already has stack trace, Wrap() does not add new stack trace.
 
 ```go
