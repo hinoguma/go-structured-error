@@ -24,6 +24,11 @@ func (st StackTrace) JsonValueString() string {
 	return jv
 }
 
+// NewStackTrace captures the current stack trace
+// NewStackTrace() starts capturing from the caller of NewStackTrace()
+// skip: number of stack frames to skip from the top
+// maxDepth: maximum number of stack frames to capture
+// if maxDepth <= 0, an empty StackTrace is returned
 func NewStackTrace(skip int, maxDepth int) StackTrace {
 	if skip < 0 {
 		skip = 0

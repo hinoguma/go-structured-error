@@ -503,14 +503,6 @@ func TestNew(t *testing.T) {
 	}
 }
 
-func TestFaultError_WithStackTrace(t *testing.T) {
-
-}
-
-func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
-
-}
-
 func TestFaultError_JsonFormatter(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
