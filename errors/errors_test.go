@@ -35,7 +35,7 @@ func newTestCustomError3() *testCustomError3 {
 	err := &testCustomError3{
 		FaultError: fault.FaultError{},
 	}
-	err.SetType(testErrorType3)
+	_ = err.SetType(testErrorType3)
 	return err
 }
 

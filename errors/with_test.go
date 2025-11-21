@@ -186,10 +186,6 @@ func TestWithWrapper_StackTrace(t *testing.T) {
 var errStd = errors.New("standard error")
 var errC3 = newTestCustomError3()
 
-type testCustomFaultError struct {
-	fault.FaultError
-}
-
 func assertEqualsStackTraceItem(t *testing.T, got, expected fault.StackTraceItem, filterPrefix string) {
 	// only check traces from this package
 	// runtime and file system depends on environment

@@ -133,11 +133,6 @@ func (f VerboseFormatter) formatMain() string {
 		txt += "\n" + "request_id: " + f.requestId
 	}
 
-	// remove the last newline
-	if strings.HasSuffix(txt, "\n") {
-		txt = txt[:len(txt)-1]
-	}
-
 	// tags
 	if len(f.tags.tags) > 0 {
 		txt += "\n" + "tags:"
@@ -153,7 +148,7 @@ func (f VerboseFormatter) formatMain() string {
 		}
 	}
 
-	txt = strings.Replace(txt, "\n", "\n"+indentation, -1)
+	txt = strings.ReplaceAll(txt, "\n", "\n"+indentation)
 	txt = f.title + ":" + txt
 	return txt
 }
