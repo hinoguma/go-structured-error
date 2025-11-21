@@ -474,3 +474,100 @@ func TestNew(t *testing.T) {
 		})
 	}
 }
+
+type causerTestError struct {
+	msg   string
+	cause error
+}
+
+func (e *causerTestError) Error() string {
+	return e.msg
+}
+
+func (e *causerTestError) Cause() error {
+	return e.cause
+}
+
+func TestCause(t *testing.T) {
+	err1 := errors.New("root cause error")
+	wrappedErr := fmt.Errorf("wrapped: %w", err1)
+	faultNilErr := fault.NewRawFaultError(nil)
+	joinedErr := errors.Join(err1, errors.New("another error"))
+	causerErr := &causerTestError{
+		msg:   "causer error",
+		cause: err1,
+	}
+	testCases := []struct {
+		label    string
+		err      error
+		expected error
+	}{
+		{
+			label:    "simple wrapped error",
+			err:      wrappedErr,
+			expected: err1,
+		},
+		{
+			label:    "non-wrapped error",
+			err:      err1,
+			expected: err1,
+		},
+		{
+			label:    "nil error",
+			err:      nil,
+			expected: nil,
+		},
+		{
+			label:    "fault error has error inside",
+			err:      fault.NewRawFaultError(err1),
+			expected: err1,
+		},
+		{
+			label:    "fault error wrapping another error",
+			err:      fault.NewRawFaultError(wrappedErr),
+			expected: err1,
+		},
+		{
+			label:    "fault error has nil inside",
+			err:      faultNilErr,
+			expected: faultNilErr,
+		},
+		{
+			label:    "joined errors",
+			err:      joinedErr,
+			expected: joinedErr,
+		},
+		{
+			label:    "wrapped joined errors",
+			err:      fmt.Errorf("wrapping: %w", joinedErr),
+			expected: joinedErr,
+		},
+		{
+			label:    "causer error",
+			err:      causerErr,
+			expected: err1,
+		},
+		{
+			label:    "wrapped causer error",
+			err:      fmt.Errorf("wrapping: %w", causerErr),
+			expected: err1,
+		},
+		{
+			label: "complex wrapping with causer and fault",
+			err: func() error {
+				fe := fault.NewRawFaultError(causerErr)
+				return fmt.Errorf("outer wrap: %w", fe)
+			}(),
+			expected: err1,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := Cause(tc.err)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}

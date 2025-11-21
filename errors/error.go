@@ -67,3 +67,32 @@ func Lift(err error) error {
 	}
 	return fe
 }
+
+type causer interface {
+	Cause() error
+}
+
+// compatibility functions for errors.Cause in pkg/errors
+// Cause() returns the underlying cause of the error
+func Cause(err error) error {
+	if err == nil {
+		return nil
+	}
+	unwrapped := err
+	var tmp error
+	for {
+		if c, ok := unwrapped.(causer); ok {
+			tmp = c.Cause()
+			if tmp == nil {
+				return unwrapped
+			}
+			unwrapped = tmp
+			continue
+		}
+		tmp = Unwrap(unwrapped)
+		if tmp == nil {
+			return unwrapped
+		}
+		unwrapped = tmp
+	}
+}
