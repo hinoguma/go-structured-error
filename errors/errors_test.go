@@ -25,8 +25,18 @@ func (e *testCustomError2) Error() string {
 	return "error code: " + strconv.Itoa(e.code)
 }
 
+const testErrorType3 fault.ErrorType = "testCustomError3"
+
 type testCustomError3 struct {
 	fault.FaultError
+}
+
+func newTestCustomError3() *testCustomError3 {
+	err := &testCustomError3{
+		FaultError: fault.FaultError{},
+	}
+	err.SetType(testErrorType3)
+	return err
 }
 
 func assertEqualsFaultWithoutStackTrace(t *testing.T, got, expected fault.Fault) {
@@ -565,6 +575,44 @@ func TestCause(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			got := Cause(tc.err)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestIsType(t *testing.T) {
+	// already tested in fault.fault_is_test.go
+	testCases := []struct {
+		label    string
+		err      error
+		errType  fault.ErrorType
+		expected bool
+	}{
+		{
+			label:    "nil error",
+			err:      nil,
+			errType:  fault.ErrorTypeNone,
+			expected: false,
+		},
+		{
+			label:    "fault error with matching type",
+			err:      New("test error"),
+			errType:  fault.ErrorTypeNone,
+			expected: true,
+		},
+		{
+			label:    "fault error with non-matching type",
+			err:      New("test error"),
+			errType:  "custom_type",
+			expected: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := IsType(tc.err, tc.errType)
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}

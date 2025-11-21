@@ -124,15 +124,15 @@ func TestJsonFormatter_Format(t *testing.T) {
 	}
 }
 
-func TestTextFormatter_formatMain(t *testing.T) {
+func TestVerboseFormatter_formatMain(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter TextFormatter
+		formatter VerboseFormatter
 		expected  string
 	}{
 		{
 			label: "required fields",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
@@ -160,7 +160,7 @@ func TestTextFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "with when and requestId",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:      "sub_error1",
 				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
@@ -179,7 +179,7 @@ func TestTextFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "tags",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:      "sub_error2",
 				err:        errors.New("error with tags"),
 				stacktrace: make(StackTrace, 0),
@@ -205,7 +205,7 @@ func TestTextFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "empty tags",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:      "sub_error3",
 				err:        errors.New("error with empty tags"),
 				stacktrace: make(StackTrace, 0),
@@ -222,7 +222,7 @@ func TestTextFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "empty",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:      "main_error",
 				err:        nil,
 				stacktrace: nil,
@@ -245,15 +245,15 @@ func TestTextFormatter_formatMain(t *testing.T) {
 	}
 }
 
-func TestTextFormatter_Format(t *testing.T) {
+func TestVerboseFormatter_Format(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter TextFormatter
+		formatter VerboseFormatter
 		expected  string
 	}{
 		{
 			label: "not sub errors",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
@@ -275,7 +275,7 @@ func TestTextFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "with sub errors",
-			formatter: TextFormatter{
+			formatter: VerboseFormatter{
 				title:      "main_error",
 				err:        errors.New("main error"),
 				stacktrace: make(StackTrace, 0),

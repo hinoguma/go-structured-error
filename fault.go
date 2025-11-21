@@ -189,7 +189,7 @@ func (e *FaultError) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if f.Flag('+') {
-			_, _ = fmt.Fprintf(f, "%s", e.TextFormatter().Format())
+			_, _ = fmt.Fprintf(f, "%s", e.VerboseFormatter().Format())
 			return
 		}
 		_, _ = fmt.Fprintf(f, "%s", e.Error())
@@ -212,8 +212,8 @@ func (e *FaultError) JsonFormatter() ErrorFormatter {
 	}
 }
 
-func (e *FaultError) TextFormatter() ErrorFormatter {
-	return TextFormatter{
+func (e *FaultError) VerboseFormatter() ErrorFormatter {
+	return VerboseFormatter{
 		title:      "main_error",
 		errorType:  e.errorType,
 		err:        e.err,
@@ -225,6 +225,8 @@ func (e *FaultError) TextFormatter() ErrorFormatter {
 	}
 }
 
+// IsTYpe() checks whether the given error or any of its wrapped errors is of the specified ErrorType.
+// errors.Is() checks for error equality, but this function checks for error type.
 func IsType(err error, t ErrorType) bool {
 	if err == nil {
 		return false
@@ -267,6 +269,7 @@ type Fault interface {
 	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Fault
 	AddTagSafe(key string, value TagValue) Fault
 	DeleteTag(key string) Fault
+	AddSubError(errs ...error) Fault
 
 	JsonString() string
 }
@@ -277,4 +280,8 @@ type Typer interface {
 
 type StackTracer interface {
 	StackTrace() StackTrace
+}
+
+type JsonStringer interface {
+	JsonString() string
 }

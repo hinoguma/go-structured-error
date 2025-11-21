@@ -10,12 +10,9 @@ import (
 )
 
 const (
-	LineTraceLevel1             = 25
-	LineTraceLevel2             = 33
-	LineTraceLevel3             = 39
-	LineTraceLevel4             = 46
-	LineTraceLevel5             = 50
-	LineStackTraceWithSkipDepth = 46
+	LineTraceLevel4             = 43
+	LineTraceLevel5             = 47
+	LineStackTraceWithSkipDepth = 37
 )
 
 func traceLevel1(w *WithWrapper, skip int, depth int, level int) {
@@ -161,7 +158,7 @@ func TestWithWrapper_StackTrace(t *testing.T) {
 	expected := fault.StackTrace{
 		{
 			File:     "ignored",
-			Line:     150,
+			Line:     147,
 			Function: "github.com/hinoguma/go-fault/errors.TestWithWrapper_StackTrace",
 		},
 		{
@@ -187,6 +184,7 @@ func TestWithWrapper_StackTrace(t *testing.T) {
 }
 
 var errStd = errors.New("standard error")
+var errC3 = newTestCustomError3()
 
 type testCustomFaultError struct {
 	fault.FaultError
@@ -219,44 +217,6 @@ func assertEqualsStackTrace(t *testing.T, got, expected fault.StackTrace, filter
 	}
 }
 
-func TestWithWrapper_convertToFault(t *testing.T) {
-	testCases := []struct {
-		label    string
-		wrapper  *WithWrapper
-		expected fault.Fault
-	}{
-		{
-			label:    "nil error",
-			wrapper:  With(nil),
-			expected: nil,
-		},
-		{
-			label:    "go standard error",
-			wrapper:  With(errStd),
-			expected: fault.NewRawFaultError(errStd),
-		},
-		{
-			label:    "fault error",
-			wrapper:  With(fault.NewRawFaultError(errStd)),
-			expected: fault.NewRawFaultError(errStd),
-		},
-		{
-			label:    "custom fault error",
-			wrapper:  With(&testCustomFaultError{}),
-			expected: &testCustomFaultError{},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.label, func(t *testing.T) {
-			err := tc.wrapper.convertToFault()
-			if !reflect.DeepEqual(tc.expected, err) {
-				t.Errorf("expected %v, got %v", tc.expected, err)
-			}
-		})
-	}
-}
-
 func TestWithWrapper_Err(t *testing.T) {
 	testCases := []struct {
 		label    string
@@ -271,7 +231,7 @@ func TestWithWrapper_Err(t *testing.T) {
 		{
 			label:    "go standard error",
 			wrapper:  With(errStd),
-			expected: errStd,
+			expected: fault.NewRawFaultError(errStd),
 		},
 		{
 			label:    "fault error",

@@ -76,7 +76,7 @@ func (f JsonFormatter) Format() string {
 	return jsonStr
 }
 
-type TextFormatter struct {
+type VerboseFormatter struct {
 	// required
 	title      string
 	errorType  ErrorType
@@ -90,7 +90,7 @@ type TextFormatter struct {
 	subErrors []error
 }
 
-func (f TextFormatter) Format() string {
+func (f VerboseFormatter) Format() string {
 
 	txt := ""
 	txt += f.formatMain()
@@ -100,12 +100,12 @@ func (f TextFormatter) Format() string {
 			if subErr == nil {
 				continue
 			}
-			fe, ok := subErr.(interface{ TextFormatter() ErrorFormatter })
-			var subFormatter TextFormatter
+			fe, ok := subErr.(interface{ VerboseFormatter() ErrorFormatter })
+			var subFormatter VerboseFormatter
 			if ok {
-				subFormatter = fe.TextFormatter().(TextFormatter)
+				subFormatter = fe.VerboseFormatter().(VerboseFormatter)
 			} else {
-				subFormatter = TextFormatter{
+				subFormatter = VerboseFormatter{
 					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
@@ -117,7 +117,7 @@ func (f TextFormatter) Format() string {
 	return txt
 }
 
-func (f TextFormatter) formatMain() string {
+func (f VerboseFormatter) formatMain() string {
 	txt := ""
 	if f.err == nil {
 		txt += "\n" + "message: " + NoErrStr

@@ -36,15 +36,13 @@ func Join(errs ...error) error {
 
 // compatibility functions for errors.Wrap in pkg/errors, cockroachdb/errors, etc.
 // a lot of libraries make Wrap function to wrap errors with message
-// Wrap() always return fault.Fault with stack trace
+// Wrap() clarifies return type is error interface due to compatibility.
+// But Wrap() makes sure the returned error is always fault.Fault interface.
 func Wrap(err error, msg string) error {
 	if err == nil {
 		return nil
 	}
-	fe, ok := err.(fault.Fault)
-	if !ok {
-		fe = fault.NewRawFaultError(err)
-	}
+	fe := ToFault(err)
 	if len(fe.StackTrace()) == 0 {
 		_ = fe.WithStackTrace()
 	}
@@ -58,10 +56,7 @@ func Lift(err error) error {
 	if err == nil {
 		return nil
 	}
-	fe, ok := err.(fault.Fault)
-	if !ok {
-		fe = fault.NewRawFaultError(err)
-	}
+	fe := ToFault(err)
 	if len(fe.StackTrace()) == 0 {
 		_ = fe.WithStackTrace()
 	}
@@ -95,4 +90,10 @@ func Cause(err error) error {
 		}
 		unwrapped = tmp
 	}
+}
+
+// This is original function in fault package
+// IsType() checks whether the error is of the specified ErrorType
+func IsType(err error, t fault.ErrorType) bool {
+	return fault.IsType(err, t)
 }
