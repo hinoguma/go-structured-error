@@ -26,6 +26,15 @@ func NewRawFaultError(err error) *FaultError {
 	}
 }
 
+func NewWithSkipAndDepth(err error, skip int, maxDepth int) *FaultError {
+	if skip < 0 {
+		skip = 0
+	}
+	fe := NewRawFaultError(err)
+	_ = fe.SetStackTraceWithSkipMaxDepth(skip+1, maxDepth) // skip +1 to start at caller of NewWithSkipAndDepth
+	return fe
+}
+
 const (
 	ErrorTypeNone ErrorType = ""
 )

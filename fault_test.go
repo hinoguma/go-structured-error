@@ -503,6 +503,58 @@ func TestNew(t *testing.T) {
 	}
 }
 
+func TestNewWithSkipAndDepth(t *testing.T) {
+	stdErr := errors.New("go standard error")
+	testCases := []struct {
+		label    string
+		skip     int
+		depth    int
+		expected *FaultError
+	}{
+		{
+			label: "skip 0 starts capturing from NewWithSkipAndDepth",
+			skip:  0,
+			depth: 1,
+			expected: &FaultError{
+				errorType: ErrorTypeNone,
+				err:       stdErr,
+				stacktrace: StackTrace{
+					{
+						File:     "ignored",
+						Line:     34,
+						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
+					},
+				},
+				tags: NewTags(),
+			},
+		},
+		{
+			label: "skip -1 treated as skip 0",
+			skip:  -1,
+			depth: 1,
+			expected: &FaultError{
+				errorType: ErrorTypeNone,
+				err:       stdErr,
+				stacktrace: StackTrace{
+					{
+						File:     "ignored",
+						Line:     34,
+						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
+					},
+				},
+				tags: NewTags(),
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := NewWithSkipAndDepth(stdErr, tc.skip, tc.depth)
+			assertFaultErrorWithErrorValue(t, got, tc.expected)
+		})
+	}
+}
+
 func TestFaultError_JsonFormatter(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)

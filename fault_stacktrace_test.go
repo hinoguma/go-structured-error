@@ -5,7 +5,7 @@ import "testing"
 func TestFaultError_WithStackTrace(t *testing.T) {
 	// WithStackTrace should start capturing from the caller of WithStackTrace
 	err := &FaultError{}
-	err.WithStackTrace() // 8
+	_ = err.WithStackTrace() // 8
 	if len(err.stacktrace) == 0 {
 		t.Errorf("expected stacktrace to be set, but it was empty")
 	}
@@ -13,7 +13,7 @@ func TestFaultError_WithStackTrace(t *testing.T) {
 	if firstFrame.Function != "github.com/hinoguma/go-fault.TestFaultError_WithStackTrace" {
 		t.Errorf("expected top stack frame to be TestFaultError_WithStackTrace, but got %s", err.stacktrace[0].Function)
 	}
-	if firstFrame.Line != 9 {
+	if firstFrame.Line != 8 {
 		t.Errorf("expected top stack frame line to be 9, but got %d", err.stacktrace[0].Line)
 	}
 }
@@ -42,7 +42,7 @@ func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 			expected: StackTrace{
 				{
 					File:     "ignored",
-					Line:     127,
+					Line:     136,
 					Function: "github.com/hinoguma/go-fault.(*FaultError).SetStackTraceWithSkipMaxDepth",
 				},
 				{
@@ -76,7 +76,7 @@ func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 			expected: StackTrace{
 				{
 					File:     "ignored",
-					Line:     127,
+					Line:     136,
 					Function: "github.com/hinoguma/go-fault.(*FaultError).SetStackTraceWithSkipMaxDepth",
 				},
 			},
