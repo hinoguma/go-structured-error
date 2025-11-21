@@ -16,13 +16,13 @@ Go Error library with Flexibility and Functionality
 ## Compatibility with standard library errors and other libraries
 
 | Method          | Library                      | Compatibility |
-|-----------------|------------------------------|---------------|
-| errors.Is()     | Go standard package "errors" | ✅             |
-| errors.As()     | Go standard package "errors" | ✅             |
-| errors.Unwrap() | Go standard package "errors" | ✅             |   
-| errors.Join()   | Go standard package "errors" | ✅             |
-| errors.Wrap()   | pkg/errors                   | ✅             |
-| errors.Cause()  | pkg/errors                   | Not yet       |
+|-----------------|------------------------------|---------|
+| errors.Is()     | Go standard package "errors" | ✅       |
+| errors.As()     | Go standard package "errors" | ✅       |
+| errors.Unwrap() | Go standard package "errors" | ✅       |   
+| errors.Join()   | Go standard package "errors" | ✅       |
+| errors.Wrap()   | pkg/errors                   | ✅       |
+| errors.Cause()  | pkg/errors                   | ✅       |
 
 ## How to use
 
@@ -40,10 +40,12 @@ import (
 err := errors.New("example error")
 fmt.Printf("%+v", err)
 // Output:
-// [Type:none] [Message:example error]
-// Stack trace:
-// main.main
-//     /path/to/your/file.go:10
+// main_error:
+//     message: example error
+//     type: none
+//     stack trace:
+//         example.exampleFunction() /path/to/your/file.go:15
+//         example.exampleFunction2() /path/to/your/file.go:20
 ```
 
 <br>
@@ -59,10 +61,12 @@ originalErr = errors.Wrap(originalErr, "wrapped error") // adding stack trace
 
 fmt.Printf("%+v", originalErr)
 // Output:
-// [Type:none] [Message:wrapped error: original error]
-// Stack trace:
-// main.main
-//     /path/to/your/file.go:15
+// main_error:
+//     message: wrapped error: original error
+//     type: none
+//     stack trace:
+//         example.exampleFunction() /path/to/your/file.go:15
+//         example.exampleFunction2() /path/to/your/file.go:20
 ```
 
 
@@ -150,7 +154,14 @@ err = errors.With(err).
 
 fmt.Printf("%+v", err)
 // Output:
-// [Type:none] [Message:error with type]
+// main_error:
+//     message: example error
+//     type: none
+//     when: 2024-01-01T12:00:00Z
+//     request id: request-1234
+//     stack trace:
+//         example.exampleFunction() /path/to/your/file.go:15
+//         example.exampleFunction2() /path/to/your/file.go:20
 ```
 
 <br>
@@ -167,7 +178,17 @@ err = errors.With(err).
 
 fmt.Printf("%+v", err)
 // Output:
-// [Type:none] [Message:error with type]
+// main_error:
+//     message: example error
+//     type: none
+//     tags:
+//         key1: value1
+//         key2: 42
+//         key3: 3.14
+//         key4: true
+//     stack trace:
+//         example.exampleFunction() /path/to/your/file.go:15
+//         example.exampleFunction2() /path/to/your/file.go:20
 ```
 
 <br>
@@ -179,7 +200,7 @@ type, message, stacktrace are always included in the JSON output.<br>
 when, request_id, tags are included only if they are set.
 
 ```go
-js := errors.Converter(err).JsonString()
+js := errors.ToJsonString(err)
 fmt.Println(js)
 // Output:
 // {"type":"CustomType1","message":"error with type","when":"2024-06-01T12:00:00Z","request_id":"request-1234","tags":{"key1":"value1","key2":42,"key3":3.14,"key4":true}}
@@ -201,11 +222,21 @@ fmt.Println(js)
 ```
 
 #### Log as plain string
-
+use fmt with %+v verb to print error with all details including stack trace.
 ```go
-fmt.PrintF("%+v\n", err)
-// Output:
-// [Type:CustomType1] [Message:error with type] [When:2024-06-01 12:00:00 +0000 UTC] [RequestID:request-1234] [Tags:key1=value1,key2=42,key3=3.14,key4=true]
+txt := fmt.SprintF("%+v\n", err)
+// txt is:
+// main_error:
+//     message: example error
+//     type: none
+//     tags:
+//         key1: value1
+//         key2: 42
+//         key3: 3.14
+//         key4: true
+//     stack trace:
+//         example.exampleFunction() /path/to/your/file.go:15
+//         example.exampleFunction2() /path/to/your/file.go:20
 ```
 
 
