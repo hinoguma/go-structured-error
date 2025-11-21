@@ -50,3 +50,20 @@ func Wrap(err error, msg string) error {
 	}
 	return fe.SetErr(fmt.Errorf("%s: %w", msg, fe.Unwrap()))
 }
+
+// Lift() is similar to Wrap() but now wrapping with message
+// Lift() converts any error to fault.Fault
+// if the error is already fault.Fault, it just adds stack trace if missing
+func Lift(err error) error {
+	if err == nil {
+		return nil
+	}
+	fe, ok := err.(fault.Fault)
+	if !ok {
+		fe = fault.NewRawFaultError(err)
+	}
+	if len(fe.StackTrace()) == 0 {
+		_ = fe.WithStackTrace()
+	}
+	return fe
+}

@@ -346,6 +346,82 @@ func TestWrap(t *testing.T) {
 	}
 }
 
+func TestLift(t *testing.T) {
+	testCases := []struct {
+		label    string
+		err      error
+		expected error
+	}{
+		{
+			label:    "wrap standard error",
+			err:      errStd,
+			expected: fault.NewRawFaultError(errStd),
+		},
+		{
+			label:    "wrap nil error",
+			err:      nil,
+			expected: nil,
+		},
+		{
+			label: "wrap fault error",
+			err:   fault.New("Original fault error"),
+			expected: func() error {
+				fe := fault.New("Original fault error")
+				return fe
+			}(),
+		},
+		{
+			label: "wrap custom error",
+			err:   testCustomError{msg: "custom error occurred"},
+			expected: func() error {
+				fe := fault.NewRawFaultError(testCustomError{msg: "custom error occurred"})
+				return fe
+			}(),
+		},
+		{
+			label: "wrap custom error implementing error interface",
+			err: func() error {
+				err := &testCustomError3{}
+				_ = err.SetErr(errStd)
+				return err
+			}(),
+			expected: func() error {
+				err := &testCustomError3{}
+				_ = err.SetErr(errStd)
+				return err
+			}(),
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := Lift(tc.err)
+			if tc.expected == nil || got == nil {
+				if tc.expected != got {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			expectedFe, expectedOk := tc.expected.(fault.Fault)
+			fe, gotOk := got.(fault.Fault)
+			if expectedOk != gotOk {
+				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+			}
+			if expectedOk && gotOk {
+				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+			} else {
+				if !reflect.DeepEqual(got, tc.expected) {
+					t.Errorf("expected %v, got %v", tc.expected, got)
+				}
+				return
+			}
+			if len(fe.StackTrace()) == 0 {
+				t.Errorf("expected stack trace to be set, but it was empty")
+			}
+		})
+	}
+}
+
 func TestNew(t *testing.T) {
 	testCases := []struct {
 		label    string
