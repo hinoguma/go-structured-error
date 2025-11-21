@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestConverter_JsonString(t *testing.T) {
+func TestToJsonString(t *testing.T) {
 	// The format of Json follows FaultError's JsonString output
 	// test cases of each props are implemented in fault package tests
 	testCases := []struct {
@@ -16,7 +16,7 @@ func TestConverter_JsonString(t *testing.T) {
 		{
 			label:    "nil",
 			err:      nil,
-			expected: `{"type":"none","message":"","stacktrace":[]}`,
+			expected: `{"type":"none","message":"<no error>","stacktrace":[]}`,
 		},
 		{
 			label:    "fault error",

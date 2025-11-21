@@ -110,7 +110,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 				when:       nil,
 				requestId:  "",
 			},
-			expected: `{"type":"none","message":"","stacktrace":[]}`,
+			expected: `{"type":"none","message":"<no error>","stacktrace":[]}`,
 		},
 	}
 

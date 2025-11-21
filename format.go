@@ -27,10 +27,9 @@ type JsonFormatter struct {
 }
 
 func (f JsonFormatter) Format() string {
-	jsonStr := "{"
-	jsonStr += `"type":"` + f.errorType.StringWithDefaultNone() + `"`
+	jsonStr := `{"type":"` + f.errorType.StringWithDefaultNone() + `"`
 	if f.err == nil {
-		jsonStr += `,"message":""`
+		jsonStr += `,"message":"` + NoErrStr + `"`
 	} else {
 		jsonStr += `,"message":"` + f.err.Error() + `"`
 	}
