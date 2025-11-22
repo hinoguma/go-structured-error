@@ -1,6 +1,7 @@
 package fault
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -31,13 +32,21 @@ func (f JsonFormatter) Format() string {
 	if f.err == nil {
 		jsonStr += `,"message":"` + NoErrStr + `"`
 	} else {
-		jsonStr += `,"message":"` + f.err.Error() + `"`
+		escaped, ok := json.Marshal(f.err.Error())
+		if ok != nil {
+			escaped = []byte(`"` + f.err.Error() + `"`)
+		}
+		jsonStr += `,"message":` + string(escaped)
 	}
 	if f.when != nil {
 		jsonStr += `,"when":"` + f.when.Format(time.RFC3339) + `"`
 	}
 	if f.requestId != "" {
-		jsonStr += `,"request_id":"` + f.requestId + `"`
+		escaped, ok := json.Marshal(f.requestId)
+		if ok != nil {
+			escaped = []byte(`"` + f.requestId + `"`)
+		}
+		jsonStr += `,"request_id":` + string(escaped)
 	}
 
 	if len(f.tags.tags) > 0 {
