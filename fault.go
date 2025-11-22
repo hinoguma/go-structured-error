@@ -7,10 +7,13 @@ import (
 )
 
 func New(message string) *FaultError {
-	err := NewRawFaultError(errors.New(message))
 	// set stack trace starting from caller of NewFaultError
-	_ = err.SetStackTraceWithSkipMaxDepth(2, MaxStackTraceDepth)
-	return err
+	// skip 1 to start at caller of New
+	return NewWithSkipAndDepth(
+		errors.New(message),
+		1,
+		MaxStackTraceDepth,
+	)
 }
 
 func NewRawFaultError(err error) *FaultError {
@@ -33,6 +36,17 @@ func NewWithSkipAndDepth(err error, skip int, maxDepth int) *FaultError {
 	fe := NewRawFaultError(err)
 	_ = fe.SetStackTraceWithSkipMaxDepth(skip+1, maxDepth) // skip +1 to start at caller of NewWithSkipAndDepth
 	return fe
+}
+
+func ToFault(err error) Fault {
+	if err == nil {
+		return nil
+	}
+	fe, ok := err.(Fault)
+	if ok {
+		return fe
+	}
+	return NewRawFaultError(err)
 }
 
 const (

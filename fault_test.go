@@ -723,3 +723,60 @@ func TestFaultError_Format(t *testing.T) {
 		})
 	}
 }
+
+func TestToFault(t *testing.T) {
+	stdErr := errors.New("standard error")
+	testCases := []struct {
+		label    string
+		err      error
+		expected Fault
+	}{
+		{
+			label:    "nil error",
+			err:      nil,
+			expected: nil,
+		},
+		{
+			label: "convert standard error",
+			err:   errors.New("standard error"),
+			expected: &FaultError{
+				errorType:  ErrorTypeNone,
+				err:        stdErr,
+				stacktrace: make(StackTrace, 0),
+				tags:       NewTags(),
+				subErrors:  make([]error, 0),
+			},
+		},
+		{
+			label: "already a FaultError",
+			err: &FaultError{
+				errorType:  ErrorTypeNone,
+				err:        stdErr,
+				stacktrace: make(StackTrace, 0),
+				tags:       NewTags(),
+				subErrors:  make([]error, 0),
+			},
+			expected: &FaultError{
+				errorType:  ErrorTypeNone,
+				err:        stdErr,
+				stacktrace: make(StackTrace, 0),
+				tags:       NewTags(),
+				subErrors:  make([]error, 0),
+			},
+		},
+		{
+			label:    "already a Fault interface",
+			err:      &testCustomFaultError1{},
+			expected: &testCustomFaultError1{},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := ToFault(tc.err)
+			if !reflect.DeepEqual(got, tc.expected) {
+				t.Errorf("expected Fault %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
