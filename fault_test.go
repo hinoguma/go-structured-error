@@ -521,7 +521,7 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 				stacktrace: StackTrace{
 					{
 						File:     "ignored",
-						Line:     34,
+						Line:     37,
 						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
 					},
 				},
@@ -538,7 +538,7 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 				stacktrace: StackTrace{
 					{
 						File:     "ignored",
-						Line:     34,
+						Line:     37,
 						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
 					},
 				},

@@ -8,10 +8,10 @@ import (
 
 func New(message string) *FaultError {
 	// set stack trace starting from caller of NewFaultError
-	// skip 1 to start at caller of New
+	// skip 2 to start at caller of New
 	return NewWithSkipAndDepth(
 		errors.New(message),
-		1,
+		2,
 		MaxStackTraceDepth,
 	)
 }

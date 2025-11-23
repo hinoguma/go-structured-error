@@ -42,7 +42,7 @@ func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 			expected: StackTrace{
 				{
 					File:     "ignored",
-					Line:     136,
+					Line:     150,
 					Function: "github.com/hinoguma/go-fault.(*FaultError).SetStackTraceWithSkipMaxDepth",
 				},
 				{
@@ -76,7 +76,7 @@ func TestFaultError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 			expected: StackTrace{
 				{
 					File:     "ignored",
-					Line:     136,
+					Line:     150,
 					Function: "github.com/hinoguma/go-fault.(*FaultError).SetStackTraceWithSkipMaxDepth",
 				},
 			},

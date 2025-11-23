@@ -46,3 +46,14 @@ func WithType(t ErrorType) WithFunc {
 		return fe
 	}
 }
+
+func WithTagSafe(key string, value TagValue) WithFunc {
+	return func(err error) error {
+		fe := ToFault(err)
+		if fe == nil {
+			return nil
+		}
+		_ = fe.AddTagSafe(key, value)
+		return fe
+	}
+}
