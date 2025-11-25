@@ -88,7 +88,11 @@ func (f ErrorJsonPrinter) Print() string {
 	return jsonStr
 }
 
-type VerboseFormatter struct {
+type VerbosePrinter interface {
+	Print() string
+}
+
+type ErrorVerbosePrinter struct {
 	// required
 	title      string
 	errorType  ErrorType
@@ -102,34 +106,34 @@ type VerboseFormatter struct {
 	subErrors []error
 }
 
-func (f VerboseFormatter) Format() string {
+func (f ErrorVerbosePrinter) Print() string {
 
 	txt := ""
-	txt += f.formatMain()
+	txt += f.printSingle()
 
 	if len(f.subErrors) > 0 {
 		for i, subErr := range f.subErrors {
 			if subErr == nil {
 				continue
 			}
-			fe, ok := subErr.(interface{ VerboseFormatter() ErrorFormatter })
-			var subFormatter VerboseFormatter
+			fe, ok := subErr.(interface{ VerbosePrinter() VerbosePrinter })
+			var subFormatter ErrorVerbosePrinter
 			if ok {
-				subFormatter = fe.VerboseFormatter().(VerboseFormatter)
+				subFormatter = fe.VerbosePrinter().(ErrorVerbosePrinter)
 			} else {
-				subFormatter = VerboseFormatter{
+				subFormatter = ErrorVerbosePrinter{
 					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
 			}
 			subFormatter.title = f.title + ".sub" + strconv.Itoa(i+1)
-			txt += "\n" + subFormatter.Format()
+			txt += "\n" + subFormatter.Print()
 		}
 	}
 	return txt
 }
 
-func (f VerboseFormatter) formatMain() string {
+func (f ErrorVerbosePrinter) printSingle() string {
 	txt := ""
 	if f.err == nil {
 		txt += "\n" + "message: " + NoErrStr

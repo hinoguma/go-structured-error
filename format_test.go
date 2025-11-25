@@ -124,15 +124,15 @@ func TestErrorJsonPrinter_Print(t *testing.T) {
 	}
 }
 
-func TestVerboseFormatter_formatMain(t *testing.T) {
+func TestErrorVerbosePrinter_printSingle(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter VerboseFormatter
+		formatter ErrorVerbosePrinter
 		expected  string
 	}{
 		{
 			label: "required fields",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
@@ -160,7 +160,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "with when and requestId",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "sub_error1",
 				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
@@ -179,7 +179,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "tags",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "sub_error2",
 				err:        errors.New("error with tags"),
 				stacktrace: make(StackTrace, 0),
@@ -205,7 +205,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "empty tags",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "sub_error3",
 				err:        errors.New("error with empty tags"),
 				stacktrace: make(StackTrace, 0),
@@ -222,7 +222,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "empty",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "main_error",
 				err:        nil,
 				stacktrace: nil,
@@ -237,7 +237,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.formatter.formatMain()
+			got := tc.formatter.printSingle()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}
@@ -245,15 +245,15 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 	}
 }
 
-func TestVerboseFormatter_Format(t *testing.T) {
+func TestErrorVerbosePrinter_Print(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter VerboseFormatter
+		formatter ErrorVerbosePrinter
 		expected  string
 	}{
 		{
 			label: "not sub errors",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
@@ -275,7 +275,7 @@ func TestVerboseFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "with sub errors",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "main_error",
 				err:        errors.New("main error"),
 				stacktrace: make(StackTrace, 0),
@@ -325,7 +325,7 @@ main_error.sub2.sub2:
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.formatter.Format()
+			got := tc.formatter.Print()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}

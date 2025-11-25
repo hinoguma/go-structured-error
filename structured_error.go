@@ -191,7 +191,7 @@ func (e *StructuredError) Format(f fmt.State, verb rune) {
 	switch verb {
 	case 'v':
 		if f.Flag('+') {
-			_, _ = fmt.Fprintf(f, "%s", e.VerboseFormatter().Format())
+			_, _ = fmt.Fprintf(f, "%s", e.VerbosePrinter().Print())
 			return
 		}
 		_, _ = fmt.Fprintf(f, "%s", e.Error())
@@ -214,8 +214,8 @@ func (e *StructuredError) JsonPrinter() JsonPrinter {
 	}
 }
 
-func (e *StructuredError) VerboseFormatter() ErrorFormatter {
-	return VerboseFormatter{
+func (e *StructuredError) VerbosePrinter() VerbosePrinter {
+	return ErrorVerbosePrinter{
 		title:      "main_error",
 		errorType:  e.errorType,
 		err:        e.err,
