@@ -413,7 +413,7 @@ func TestNew(t *testing.T) {
 				fe := NewRawStructuredError(errors.New("this is a test error"))
 				fe.stacktrace = StackTrace{
 					{
-						Function: "github.com/hinoguma/go-fault/structurederror.TestNew.func3",
+						Function: "github.com/hinoguma/go-fault.TestNew.func3",
 					},
 					{
 						Function: "testing.tRunner",
@@ -432,7 +432,7 @@ func TestNew(t *testing.T) {
 				fe := NewRawStructuredError(errors.New(""))
 				fe.stacktrace = StackTrace{
 					{
-						Function: "github.com/hinoguma/go-fault/structurederror.TestNew.func3",
+						Function: "github.com/hinoguma/go-fault.TestNew.func3",
 					},
 					{
 						Function: "testing.tRunner",
