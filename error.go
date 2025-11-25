@@ -91,7 +91,7 @@ func Cause(err error) error {
 	}
 }
 
-// IsTYpe() checks whether the given error or any of its wrapped errors is of the specified ErrorType.
+// IsType() checks whether the given error or any of its wrapped errors is of the specified ErrorType.
 // errors.Is() checks for error equality, but this function checks for error type.
 func IsType(err error, t ErrorType) bool {
 	if err == nil {
