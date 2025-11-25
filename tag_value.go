@@ -1,10 +1,12 @@
-package fault
+package go_fault
 
 import (
 	"encoding/json"
 	"fmt"
 )
 
+// TagValue.String is a methof to convert the tag value to a string for verbose output
+// TagValue.JsonValueString is a method to convert the tag value to a json string safely
 type TagValue interface {
 	String() string
 	JsonValueString() string
@@ -17,6 +19,8 @@ func (v StringTagValue) String() string {
 }
 
 func (v StringTagValue) JsonValueString() string {
+	// escape the string for JSON
+	// line breaks and special characters will be escaped
 	s, _ := json.Marshal(v.String())
 	return string(s)
 }

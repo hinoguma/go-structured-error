@@ -1,9 +1,8 @@
-package errors
+package go_fault
 
 import (
 	"errors"
 	"fmt"
-	"github.com/hinoguma/go-fault"
 	"reflect"
 	"strconv"
 	"testing"
@@ -25,49 +24,18 @@ func (e *testCustomError2) Error() string {
 	return "error code: " + strconv.Itoa(e.code)
 }
 
-const testErrorType3 fault.ErrorType = "testCustomError3"
+const testErrorType3 ErrorType = "testCustomError3"
 
 type testCustomError3 struct {
-	fault.FaultError
+	StructuredError
 }
 
 func newTestCustomError3() *testCustomError3 {
 	err := &testCustomError3{
-		FaultError: fault.FaultError{},
+		StructuredError: StructuredError{},
 	}
 	_ = err.SetType(testErrorType3)
 	return err
-}
-
-func assertEqualsFaultWithoutStackTrace(t *testing.T, got, expected fault.Fault) {
-	if got.Type() != expected.Type() {
-		t.Errorf("expected fault type %v, got %v", expected.Type(), got.Type())
-	}
-	if (got.When() == nil) != (expected.When() == nil) {
-		t.Errorf("expected when %v, got %v", expected.When(), got.When())
-	} else if got.When() != nil && !got.When().Equal(*expected.When()) {
-		t.Errorf("expected when %v, got %v", *expected.When(), *got.When())
-	}
-	if got.RequestID() != expected.RequestID() {
-		t.Errorf("expected request ID %v, got %v", expected.RequestID(), got.RequestID())
-	}
-	unwrapGot := got.Unwrap()
-	unwrapExpected := expected.Unwrap()
-	if unwrapGot == nil || unwrapExpected == nil {
-		if unwrapGot != unwrapExpected {
-			t.Errorf("expected unwrapped error %v, got %v", unwrapExpected, unwrapGot)
-		}
-	} else {
-		unwrapGotFe, okGot := unwrapGot.(fault.Fault)
-		unwrapExpectedFe, okExpected := unwrapExpected.(fault.Fault)
-		if okGot && okExpected {
-			assertEqualsFaultWithoutStackTrace(t, unwrapGotFe, unwrapExpectedFe)
-		} else {
-			if !reflect.DeepEqual(unwrapGot, unwrapExpected) {
-				t.Errorf("expected unwrapped error %v, got %v", unwrapExpected, unwrapGot)
-			}
-		}
-	}
 }
 
 func TestIs(t *testing.T) {
@@ -281,7 +249,7 @@ func TestWrap(t *testing.T) {
 			label:   "wrap standard error",
 			err:     errStd,
 			message: "additional context",
-			expected: fault.NewRawFaultError(
+			expected: NewRawStructuredError(
 				fmt.Errorf("additional context: %w", errStd),
 			),
 		},
@@ -293,10 +261,10 @@ func TestWrap(t *testing.T) {
 		},
 		{
 			label:   "wrap fault error",
-			err:     fault.New("Original fault error"),
+			err:     New("Original fault error"),
 			message: "wrapping fault",
 			expected: func() error {
-				fe := fault.New("Original fault error")
+				fe := ToStructuredError(New("Original fault error"))
 				return fe.SetErr(fmt.Errorf("wrapping fault: %w", fe.Unwrap()))
 			}(),
 		},
@@ -305,7 +273,7 @@ func TestWrap(t *testing.T) {
 			err:     testCustomError{msg: "custom error occurred"},
 			message: "wrapping custom error",
 			expected: func() error {
-				fe := fault.NewRawFaultError(testCustomError{msg: "custom error occurred"})
+				fe := NewRawStructuredError(testCustomError{msg: "custom error occurred"})
 				_ = fe.WithStackTrace()
 				return fe.SetErr(fmt.Errorf("wrapping custom error: %w", fe.Unwrap()))
 			}(),
@@ -336,13 +304,13 @@ func TestWrap(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(fault.Fault)
-			fe, gotOk := got.(fault.Fault)
+			expectedFe, expectedOk := tc.expected.(Structured)
+			fe, gotOk := got.(Structured)
 			if expectedOk != gotOk {
-				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
-				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+				assertEqualsStructuredWithoutStackTrace(t, fe, expectedFe)
 			} else {
 				if !reflect.DeepEqual(got, tc.expected) {
 					t.Errorf("expected %v, got %v", tc.expected, got)
@@ -365,7 +333,7 @@ func TestLift(t *testing.T) {
 		{
 			label:    "wrap standard error",
 			err:      errStd,
-			expected: fault.NewRawFaultError(errStd),
+			expected: NewRawStructuredError(errStd),
 		},
 		{
 			label:    "wrap nil error",
@@ -374,9 +342,9 @@ func TestLift(t *testing.T) {
 		},
 		{
 			label: "wrap fault error",
-			err:   fault.New("Original fault error"),
+			err:   New("Original fault error"),
 			expected: func() error {
-				fe := fault.New("Original fault error")
+				fe := New("Original fault error")
 				return fe
 			}(),
 		},
@@ -384,7 +352,7 @@ func TestLift(t *testing.T) {
 			label: "wrap custom error",
 			err:   testCustomError{msg: "custom error occurred"},
 			expected: func() error {
-				fe := fault.NewRawFaultError(testCustomError{msg: "custom error occurred"})
+				fe := NewRawStructuredError(testCustomError{msg: "custom error occurred"})
 				return fe
 			}(),
 		},
@@ -412,13 +380,13 @@ func TestLift(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(fault.Fault)
-			fe, gotOk := got.(fault.Fault)
+			expectedFe, expectedOk := tc.expected.(Structured)
+			fe, gotOk := got.(Structured)
 			if expectedOk != gotOk {
-				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
-				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+				assertEqualsStructuredWithoutStackTrace(t, fe, expectedFe)
 			} else {
 				if !reflect.DeepEqual(got, tc.expected) {
 					t.Errorf("expected %v, got %v", tc.expected, got)
@@ -442,7 +410,18 @@ func TestNew(t *testing.T) {
 			label:   "basic error",
 			message: "this is a test error",
 			expected: func() error {
-				fe := fault.NewRawFaultError(errors.New("this is a test error"))
+				fe := NewRawStructuredError(errors.New("this is a test error"))
+				fe.stacktrace = StackTrace{
+					{
+						Function: "github.com/hinoguma/go-fault.TestNew.func3",
+					},
+					{
+						Function: "testing.tRunner",
+					},
+					{
+						Function: "runtime.goexit",
+					},
+				}
 				return fe
 			}(),
 		},
@@ -450,7 +429,18 @@ func TestNew(t *testing.T) {
 			label:   "empty message",
 			message: "",
 			expected: func() error {
-				fe := fault.NewRawFaultError(errors.New(""))
+				fe := NewRawStructuredError(errors.New(""))
+				fe.stacktrace = StackTrace{
+					{
+						Function: "github.com/hinoguma/go-fault.TestNew.func3",
+					},
+					{
+						Function: "testing.tRunner",
+					},
+					{
+						Function: "runtime.goexit",
+					},
+				}
 				return fe
 			}(),
 		},
@@ -465,21 +455,18 @@ func TestNew(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(fault.Fault)
-			fe, gotOk := got.(fault.Fault)
+			expectedFe, expectedOk := tc.expected.(*StructuredError)
+			fe, gotOk := got.(*StructuredError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type fault.Fault: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
-				assertEqualsFaultWithoutStackTrace(t, fe, expectedFe)
+				assertStructuredError(t, fe, expectedFe)
 			} else {
 				if !reflect.DeepEqual(got, tc.expected) {
 					t.Errorf("expected %v, got %v", tc.expected, got)
 				}
 				return
-			}
-			if len(fe.StackTrace()) == 0 {
-				t.Errorf("expected stack trace to be set, but it was empty")
 			}
 		})
 	}
@@ -501,7 +488,7 @@ func (e *causerTestError) Cause() error {
 func TestCause(t *testing.T) {
 	err1 := errors.New("root cause error")
 	wrappedErr := fmt.Errorf("wrapped: %w", err1)
-	faultNilErr := fault.NewRawFaultError(nil)
+	faultNilErr := NewRawStructuredError(nil)
 	joinedErr := errors.Join(err1, errors.New("another error"))
 	causerErr := &causerTestError{
 		msg:   "causer error",
@@ -529,12 +516,12 @@ func TestCause(t *testing.T) {
 		},
 		{
 			label:    "fault error has error inside",
-			err:      fault.NewRawFaultError(err1),
+			err:      NewRawStructuredError(err1),
 			expected: err1,
 		},
 		{
 			label:    "fault error wrapping another error",
-			err:      fault.NewRawFaultError(wrappedErr),
+			err:      NewRawStructuredError(wrappedErr),
 			expected: err1,
 		},
 		{
@@ -565,7 +552,7 @@ func TestCause(t *testing.T) {
 		{
 			label: "complex wrapping with causer and fault",
 			err: func() error {
-				fe := fault.NewRawFaultError(causerErr)
+				fe := NewRawStructuredError(causerErr)
 				return fmt.Errorf("outer wrap: %w", fe)
 			}(),
 			expected: err1,
@@ -575,44 +562,6 @@ func TestCause(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			got := Cause(tc.err)
-			if got != tc.expected {
-				t.Errorf("expected %v, got %v", tc.expected, got)
-			}
-		})
-	}
-}
-
-func TestIsType(t *testing.T) {
-	// already tested in fault.fault_is_test.go
-	testCases := []struct {
-		label    string
-		err      error
-		errType  fault.ErrorType
-		expected bool
-	}{
-		{
-			label:    "nil error",
-			err:      nil,
-			errType:  fault.ErrorTypeNone,
-			expected: false,
-		},
-		{
-			label:    "fault error with matching type",
-			err:      New("test error"),
-			errType:  fault.ErrorTypeNone,
-			expected: true,
-		},
-		{
-			label:    "fault error with non-matching type",
-			err:      New("test error"),
-			errType:  "custom_type",
-			expected: false,
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.label, func(t *testing.T) {
-			got := IsType(tc.err, tc.errType)
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}

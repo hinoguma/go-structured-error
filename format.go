@@ -1,6 +1,7 @@
-package fault
+package go_fault
 
 import (
+	"encoding/json"
 	"strconv"
 	"strings"
 	"time"
@@ -13,7 +14,11 @@ type ErrorFormatter interface {
 const NoErrStr string = "<no error>"
 const indentation string = "    "
 
-type JsonFormatter struct {
+type JsonPrinter interface {
+	Print() string
+}
+
+type ErrorJsonPrinter struct {
 	// required
 	errorType  ErrorType
 	err        error
@@ -26,19 +31,26 @@ type JsonFormatter struct {
 	subErrors []error
 }
 
-func (f JsonFormatter) Format() string {
-	jsonStr := "{"
-	jsonStr += `"type":"` + f.errorType.StringWithDefaultNone() + `"`
+func (f ErrorJsonPrinter) Print() string {
+	jsonStr := `{"type":"` + f.errorType.StringWithDefaultNone() + `"`
 	if f.err == nil {
-		jsonStr += `,"message":""`
+		jsonStr += `,"message":"` + NoErrStr + `"`
 	} else {
-		jsonStr += `,"message":"` + f.err.Error() + `"`
+		escaped, ok := json.Marshal(f.err.Error())
+		if ok != nil {
+			escaped = []byte(`"` + f.err.Error() + `"`)
+		}
+		jsonStr += `,"message":` + string(escaped)
 	}
 	if f.when != nil {
 		jsonStr += `,"when":"` + f.when.Format(time.RFC3339) + `"`
 	}
 	if f.requestId != "" {
-		jsonStr += `,"request_id":"` + f.requestId + `"`
+		escaped, ok := json.Marshal(f.requestId)
+		if ok != nil {
+			escaped = []byte(`"` + f.requestId + `"`)
+		}
+		jsonStr += `,"request_id":` + string(escaped)
 	}
 
 	if len(f.tags.tags) > 0 {
@@ -55,12 +67,12 @@ func (f JsonFormatter) Format() string {
 			if subErr == nil {
 				continue
 			}
-			var jf ErrorFormatter
-			fe, ok := subErr.(interface{ JsonFormatter() ErrorFormatter })
+			var jf JsonPrinter
+			fe, ok := subErr.(HasJsonPrinter)
 			if ok {
-				jf = fe.JsonFormatter()
+				jf = fe.JsonPrinter()
 			} else {
-				jf = JsonFormatter{
+				jf = ErrorJsonPrinter{
 					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
@@ -68,7 +80,7 @@ func (f JsonFormatter) Format() string {
 			if i > 0 {
 				jsonStr += `,`
 			}
-			jsonStr += jf.Format()
+			jsonStr += jf.Print()
 		}
 		jsonStr += `]`
 	}

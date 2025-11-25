@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 import "testing"
 

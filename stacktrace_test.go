@@ -1,37 +1,9 @@
-package fault
+package go_fault
 
 import (
 	"runtime"
-	"strings"
 	"testing"
 )
-
-func assertEqualsStackTraceItem(t *testing.T, got, expected StackTraceItem, filterPrefix string) {
-	// only check traces from this package
-	// runtime and file system depends on environment
-	if !strings.HasPrefix(got.Function, filterPrefix) {
-		return
-	}
-	//if got.File != expected.File {
-	//	t.Errorf("expected file %v, got %v", expected.File, got.File)
-	//}
-	if got.Line != expected.Line {
-		t.Errorf("expected line %v, got %v expected:%v got:%v", expected.Line, got.Line, expected, got)
-	}
-	if got.Function != expected.Function {
-		t.Errorf("expected function %v, got %v expected:%v got:%v", expected.Function, got.Function, expected, got)
-	}
-}
-
-func assertEqualsStackTrace(t *testing.T, got, expected StackTrace, filterPrefix string) {
-	if len(got) != len(expected) {
-		t.Errorf("expected stack trace length %v, got %v expected:%v got :%v", len(expected), len(got), expected, got)
-		return
-	}
-	for i := range got {
-		assertEqualsStackTraceItem(t, got[i], expected[i], filterPrefix)
-	}
-}
 
 const (
 	LineTraceLevel1 = 48
@@ -89,17 +61,17 @@ func TestNewStackTrace(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel5,
-					Function: "github.com/hinoguma/go-fault.traceLevel5",
+					Function: "github.com/hinoguma/go-traceLevel5",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel4,
-					Function: "github.com/hinoguma/go-fault.traceLevel4",
+					Function: "github.com/hinoguma/go-traceLevel4",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel3,
-					Function: "github.com/hinoguma/go-fault.traceLevel3",
+					Function: "github.com/hinoguma/go-traceLevel3",
 				},
 			},
 		},
@@ -112,27 +84,27 @@ func TestNewStackTrace(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel5,
-					Function: "github.com/hinoguma/go-fault.traceLevel5",
+					Function: "github.com/hinoguma/go-traceLevel5",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel4,
-					Function: "github.com/hinoguma/go-fault.traceLevel4",
+					Function: "github.com/hinoguma/go-traceLevel4",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel3,
-					Function: "github.com/hinoguma/go-fault.traceLevel3",
+					Function: "github.com/hinoguma/go-traceLevel3",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel2,
-					Function: "github.com/hinoguma/go-fault.traceLevel2",
+					Function: "github.com/hinoguma/go-traceLevel2",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel1,
-					Function: "github.com/hinoguma/go-fault.traceLevel1",
+					Function: "github.com/hinoguma/go-traceLevel1",
 				},
 
 				// The exact file and line number will vary, so we use placeholders
@@ -167,18 +139,18 @@ func TestNewStackTrace(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel5,
-					Function: "github.com/hinoguma/go-fault.traceLevel5",
+					Function: "github.com/hinoguma/go-traceLevel5",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel4,
-					Function: "github.com/hinoguma/go-fault.traceLevel4",
+					Function: "github.com/hinoguma/go-traceLevel4",
 				},
 
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel3,
-					Function: "github.com/hinoguma/go-fault.traceLevel3",
+					Function: "github.com/hinoguma/go-traceLevel3",
 				},
 			},
 		},
@@ -191,17 +163,17 @@ func TestNewStackTrace(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel3,
-					Function: "github.com/hinoguma/go-fault.traceLevel3",
+					Function: "github.com/hinoguma/go-traceLevel3",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel2,
-					Function: "github.com/hinoguma/go-fault.traceLevel2",
+					Function: "github.com/hinoguma/go-traceLevel2",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel1,
-					Function: "github.com/hinoguma/go-fault.traceLevel1",
+					Function: "github.com/hinoguma/go-traceLevel1",
 				},
 			},
 		},
@@ -214,17 +186,17 @@ func TestNewStackTrace(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel5,
-					Function: "github.com/hinoguma/go-fault.traceLevel5",
+					Function: "github.com/hinoguma/go-traceLevel5",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel4,
-					Function: "github.com/hinoguma/go-fault.traceLevel4",
+					Function: "github.com/hinoguma/go-traceLevel4",
 				},
 				{
 					File:     "ignored",
 					Line:     LineTraceLevel3,
-					Function: "github.com/hinoguma/go-fault.traceLevel3",
+					Function: "github.com/hinoguma/go-traceLevel3",
 				},
 			},
 		},
@@ -247,7 +219,7 @@ func TestNewStackTrace(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			st := tc.caller()
-			assertEqualsStackTrace(t, st, tc.expected, "github.com/hinoguma/go-fault.traceLevel")
+			assertEqualsStackTrace(t, st, tc.expected, "github.com/hinoguma/go-traceLevel")
 		})
 	}
 
@@ -264,12 +236,12 @@ func TestNewStackTraceItem(t *testing.T) {
 			fr: runtime.Frame{
 				File:     "exception/stacktrace_test.go",
 				Line:     75,
-				Function: "github.com/hinoguma/go-fault.TestNewStackTraceItem",
+				Function: "github.com/hinoguma/go-TestNewStackTraceItem",
 			},
 			expected: StackTraceItem{
 				File:     "exception/stacktrace_test.go",
 				Line:     75,
-				Function: "github.com/hinoguma/go-fault.TestNewStackTraceItem",
+				Function: "github.com/hinoguma/go-TestNewStackTraceItem",
 			},
 		},
 		{
@@ -286,7 +258,7 @@ func TestNewStackTraceItem(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			item := NewStackTraceItem(tc.fr)
-			assertEqualsStackTraceItem(t, item, tc.expected, "github.com/hinoguma/go-fault")
+			assertEqualsStackTraceItem(t, item, tc.expected, "github.com/hinoguma/go-fault.")
 		})
 	}
 }
