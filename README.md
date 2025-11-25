@@ -30,11 +30,11 @@ You can...<br>
 ```go
 import (
 "fmt"
-"github.com/hinoguma/go-fault/errors"
+"github.com/hinoguma/go-fault/serrors"
 )
 
 // error with stack trace
-err := errors.New("example error")
+err := serrors.New("example error")
 fmt.Printf("%+v", err)
 // Output:
 // main_error:
@@ -56,7 +56,7 @@ fmt.Printf("%+v", err)
 originalErr := fmt.Errorf("original error") 
 
 // add stack trace
-wrappedErr = errors.Wrap(originalErr, "wrapped error")
+wrappedErr = serrors.Wrap(originalErr, "wrapped error")
 
 fmt.Printf("%+v", wrappedErr)
 // Output:
@@ -72,13 +72,13 @@ fmt.Printf("%+v", wrappedErr)
 if the error already has stack trace,` Wrap()` does **not add new stack trace**.
 
 ```go
-import 	"github.com/hinoguma/go-fault/errors"
+import 	"github.com/hinoguma/go-fault/serrors"
 
-// go-fault/errors.New() return error with stack trace
-errWithStack := errors.New("error with stack")
+// go-fault/serrors.New() return error with stack trace
+errWithStack := serrors.New("error with stack")
 
 // no new stack trace added, just wrap error
-errors.Wrap(errWithStack, "another wrap")
+serrors.Wrap(errWithStack, "another wrap")
 ```
 
 <br>
@@ -91,19 +91,19 @@ Wrap() needs message parameter.<br>
 `Lift()` just **adds stack trace** to existing error if it doesn't have one.
 
 ```go
-import 	"github.com/hinoguma/go-fault/errors"
+import 	"github.com/hinoguma/go-fault/serrors"
 
 // add stack trace to existing error
 originalErr := fmt.Errorf("original error")
 
 // adding stack trace
-errors.Lift(originalErr)
+serrors.Lift(originalErr)
 
 // not adding stack trace if error already has one
-errWithStack := errors.New("error with stack")
+errWithStack := serrors.New("error with stack")
 
 // no new stack trace added
-errors.Lift(errWithStack)
+serrors.Lift(errWithStack)
 ```
 
 <br>
@@ -116,21 +116,21 @@ You can **add type to error** and branch your error handling logic based on erro
 const CustomType1 fault.ErrorType = "CustomType1"
 
 // Set error type as CustomType1 
-err := errors.New("error with type")
-err = errors.With(err).Type(CustomType1).Err()
+err := serrors.New("error with type")
+err = serrors.With(err).Type(CustomType1).Err()
 ```
 <br>
 
  You can check error type using `IsType()`.<br>
-`errors.Is()` checks identity of errors but `IsType()` check **error type only**.
+`serrors.Is()` checks identity of errors but `IsType()` check **error type only**.
 ```go
-if errors.IsType(err, CustomType1) {
+if serrors.IsType(err, CustomType1) {
     fmt.Println("This is a CustomType1 error")
 }
 
 // if wrapping error, IsType() can still check error type in the chain
 wrappedErr := fmt.Errorf("wrapping error: %w", err)
-if errors.IsType(wrappedErr, CustomType1) {
+if serrors.IsType(wrappedErr, CustomType1) {
 	    fmt.Println("This is a CustomType1 error")
 }
 ```
@@ -144,7 +144,7 @@ You can **add context** to error using `With()`.<br>
 `With()` provides various methods to add context to error and **methods can be chained**.
 
 ```go
-err = errors.With(err).
+err = serrors.With(err).
     Type(CustomType1).
     When(time.Now()).
     RequestID("request-1234").
@@ -157,7 +157,7 @@ err = errors.With(err).
 Use `When()` and `RequestID()`.
 
 ```go
-err = errors.With(err).
+err = serrors.With(err).
 	When(time.Now()).
 	RequestID("request-1234").
     Err()
@@ -179,7 +179,7 @@ fmt.Printf("%+v", err)
 ##### More Context
 Use `AddTagXXX()` to add more context to error.
 ```go
-err = errors.With(err).
+err = serrors.With(err).
 	AddTagString("key1", "value1").
 	AddTagInt("key2", 42).
 	AddTagFloat("key3", 3.14).
@@ -210,7 +210,7 @@ type, message, stacktrace are always included in the JSON output.<br>
 when, request_id, tags are included only if they are set.
 
 ```go
-js := errors.ToJsonString(err)
+js := serrors.ToJsonString(err)
 fmt.Println(js)
 // Output:
 // {"type":"none","error":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1","key2":42,"key3":3.14,"key4":true},"stacktrace":[{"file":"main.go","line":75,"function":"github.com/hinoguma/go-fault.main"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}
