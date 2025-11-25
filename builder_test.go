@@ -116,9 +116,9 @@ func TestStructuredErrorBuilder_StackTraceBuilderSkipDepth(t *testing.T) {
 				}
 				return
 			}
-			gotf, ok := got.(Structured)
+			gotf, ok := got.(SError)
 			if !ok {
-				t.Errorf("expected Structured, got %T", got)
+				t.Errorf("expected SError, got %T", got)
 				return
 			}
 			assertEqualsStackTrace(t, gotf.StackTrace(), tc.expected, "github.com/hinoguma/go-structured-error.")
@@ -134,9 +134,9 @@ func TestStructuredErrorBuilder_StackTrace(t *testing.T) {
 		t.Errorf("expected error, got nil")
 		return
 	}
-	gotf, ok := got.(Structured)
+	gotf, ok := got.(SError)
 	if !ok {
-		t.Errorf("expected Structured, got %T", got)
+		t.Errorf("expected SError, got %T", got)
 		return
 	}
 	expected := StackTrace{

@@ -7,11 +7,6 @@ import (
 	"time"
 )
 
-type ErrorFormatter interface {
-	Format() string
-}
-
-const NoErrStr string = "<no error>"
 const indentation string = "    "
 
 type JsonPrinter interface {

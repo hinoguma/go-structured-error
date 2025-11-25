@@ -111,7 +111,7 @@ func assertStructuredErrorWithErrorValue(t *testing.T, got, expected *Structured
 	}
 }
 
-func assertEqualsStructuredWithoutStackTrace(t *testing.T, got, expected Structured) {
+func assertEqualsStructuredWithoutStackTrace(t *testing.T, got, expected SError) {
 	if got.Type() != expected.Type() {
 		t.Errorf("expected fault type %v, got %v", expected.Type(), got.Type())
 	}
@@ -130,8 +130,8 @@ func assertEqualsStructuredWithoutStackTrace(t *testing.T, got, expected Structu
 			t.Errorf("expected unwrapped error %v, got %v", unwrapExpected, unwrapGot)
 		}
 	} else {
-		unwrapGotFe, okGot := unwrapGot.(Structured)
-		unwrapExpectedFe, okExpected := unwrapExpected.(Structured)
+		unwrapGotFe, okGot := unwrapGot.(SError)
+		unwrapExpectedFe, okExpected := unwrapExpected.(SError)
 		if okGot && okExpected {
 			assertEqualsStructuredWithoutStackTrace(t, unwrapGotFe, unwrapExpectedFe)
 		} else {

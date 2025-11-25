@@ -28,10 +28,13 @@ func NewWithSkipAndDepth(err error, skip int, maxDepth int) *StructuredError {
 	return fe
 }
 
-const (
-	ErrorTypeNone ErrorType = ""
-)
+const NoErrStr string = "<no error>"
 
+const ErrorTypeNone ErrorType = ""
+
+// ErrorType represents the type/category of the error
+// You can define your own error types as needed
+// IsType() method uses this type for comparison
 type ErrorType string
 
 func (value ErrorType) String() string {
@@ -45,6 +48,8 @@ func (value ErrorType) StringWithDefaultNone() string {
 	return string(value)
 }
 
+// StructuredError has structured information about an error
+// It can be JsonString for logging
 type StructuredError struct {
 	// required
 	errorType  ErrorType
@@ -74,7 +79,7 @@ func (e *StructuredError) Is(target error) bool {
 	if target == nil {
 		return false
 	}
-	targetFe, ok := target.(Structured)
+	targetFe, ok := target.(SError)
 	if !ok {
 		return false
 	}
@@ -100,53 +105,53 @@ func (e StructuredError) RequestID() string {
 	return e.requestId
 }
 
-func (e *StructuredError) SetErr(err error) Structured {
+func (e *StructuredError) SetErr(err error) SError {
 	e.err = err
 	return e
 }
 
-func (e *StructuredError) SetType(errorType ErrorType) Structured {
+func (e *StructuredError) SetType(errorType ErrorType) SError {
 	e.errorType = errorType
 	return e
 }
 
-func (e *StructuredError) SetWhen(t time.Time) Structured {
+func (e *StructuredError) SetWhen(t time.Time) SError {
 	e.when = &t
 	return e
 }
 
-func (e *StructuredError) SetRequestID(requestID string) Structured {
+func (e *StructuredError) SetRequestID(requestID string) SError {
 	e.requestId = requestID
 	return e
 }
 
 // WithStackTrace sets stack trace starting from caller of WithStackTrace
-func (e *StructuredError) WithStackTrace() Structured {
+func (e *StructuredError) WithStackTrace() SError {
 	return e.SetStackTraceWithSkipMaxDepth(2, MaxStackTraceDepth) // skip 2 to start at caller of WithStackTrace
 }
 
-func (e *StructuredError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Structured {
+func (e *StructuredError) SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) SError {
 	e.stacktrace = NewStackTrace(skip, maxDepth)
 	return e
 }
 
-func (e *StructuredError) AddTagString(key string, value string) Structured {
+func (e *StructuredError) AddTagString(key string, value string) SError {
 	return e.AddTagSafe(key, StringTagValue(value))
 }
 
-func (e *StructuredError) AddTagInt(key string, value int) Structured {
+func (e *StructuredError) AddTagInt(key string, value int) SError {
 	return e.AddTagSafe(key, IntTagValue(value))
 }
 
-func (e *StructuredError) AddTagBool(key string, value bool) Structured {
+func (e *StructuredError) AddTagBool(key string, value bool) SError {
 	return e.AddTagSafe(key, BoolTagValue(value))
 }
 
-func (e *StructuredError) AddTagFloat(key string, value float64) Structured {
+func (e *StructuredError) AddTagFloat(key string, value float64) SError {
 	return e.AddTagSafe(key, FloatTagValue(value))
 }
 
-func (e *StructuredError) AddTagSafe(key string, value TagValue) Structured {
+func (e *StructuredError) AddTagSafe(key string, value TagValue) SError {
 	e.tags.SetValueSafe(key, value)
 	return e
 }
@@ -158,12 +163,12 @@ func (e *StructuredError) AddTagSafe(key string, value TagValue) Structured {
 //	return true
 //}
 
-func (e *StructuredError) DeleteTag(key string) Structured {
+func (e *StructuredError) DeleteTag(key string) SError {
 	e.tags.Delete(key)
 	return e
 }
 
-func (e *StructuredError) AddSubError(errs ...error) Structured {
+func (e *StructuredError) AddSubError(errs ...error) SError {
 	if len(errs) == 0 {
 		return e
 	}
@@ -231,7 +236,7 @@ func (e *StructuredError) VerbosePrinter() VerbosePrinter {
 	Interfaces
  *********************/
 
-type Structured interface {
+type SError interface {
 	error
 	Unwrap() error
 	Type() ErrorType
@@ -239,15 +244,15 @@ type Structured interface {
 	RequestID() string
 	StackTrace() StackTrace
 
-	SetErr(err error) Structured
-	SetType(errorType ErrorType) Structured
-	SetWhen(t time.Time) Structured
-	SetRequestID(requestID string) Structured
-	WithStackTrace() Structured // auto set stack trace
-	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) Structured
-	AddTagSafe(key string, value TagValue) Structured
-	DeleteTag(key string) Structured
-	AddSubError(errs ...error) Structured
+	SetErr(err error) SError
+	SetType(errorType ErrorType) SError
+	SetWhen(t time.Time) SError
+	SetRequestID(requestID string) SError
+	WithStackTrace() SError // auto set stack trace
+	SetStackTraceWithSkipMaxDepth(skip int, maxDepth int) SError
+	AddTagSafe(key string, value TagValue) SError
+	DeleteTag(key string) SError
+	AddSubError(errs ...error) SError
 }
 
 // IsType() use this interface

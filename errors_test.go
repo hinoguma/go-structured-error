@@ -304,10 +304,10 @@ func TestWrap(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(Structured)
-			fe, gotOk := got.(Structured)
+			expectedFe, expectedOk := tc.expected.(SError)
+			fe, gotOk := got.(SError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type SError: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
 				assertEqualsStructuredWithoutStackTrace(t, fe, expectedFe)
@@ -380,10 +380,10 @@ func TestLift(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(Structured)
-			fe, gotOk := got.(Structured)
+			expectedFe, expectedOk := tc.expected.(SError)
+			fe, gotOk := got.(SError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type SError: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
 				assertEqualsStructuredWithoutStackTrace(t, fe, expectedFe)
@@ -458,7 +458,7 @@ func TestNew(t *testing.T) {
 			expectedFe, expectedOk := tc.expected.(*StructuredError)
 			fe, gotOk := got.(*StructuredError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type SError: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
 				assertStructuredError(t, fe, expectedFe)
