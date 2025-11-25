@@ -52,7 +52,7 @@ func assertStructuredError(t *testing.T, got, expected *StructuredError) {
 	if got.requestId != expected.requestId {
 		t.Errorf("expected requestId %v, got %v", expected.requestId, got.requestId)
 	}
-	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-fault.")
+	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-structured-error.")
 	assertEqualsTags(t, got.tags, expected.tags)
 	if len(got.subErrors) != len(expected.subErrors) {
 		t.Errorf("expected subErrors length %v, got %v", len(expected.subErrors), len(got.subErrors))
@@ -90,7 +90,7 @@ func assertStructuredErrorWithErrorValue(t *testing.T, got, expected *Structured
 	if got.requestId != expected.requestId {
 		t.Errorf("expected requestId %v, got %v", expected.requestId, got.requestId)
 	}
-	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-fault.")
+	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-structured-error.")
 	assertEqualsTags(t, got.tags, expected.tags)
 	if len(got.subErrors) != len(expected.subErrors) {
 		t.Errorf("expected subErrors length %v, got %v", len(expected.subErrors), len(got.subErrors))

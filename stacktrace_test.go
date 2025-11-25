@@ -258,7 +258,7 @@ func TestNewStackTraceItem(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			item := NewStackTraceItem(tc.fr)
-			assertEqualsStackTraceItem(t, item, tc.expected, "github.com/hinoguma/go-fault.")
+			assertEqualsStackTraceItem(t, item, tc.expected, "github.com/hinoguma/go-structured-error.")
 		})
 	}
 }

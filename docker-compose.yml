@@ -1,7 +1,7 @@
 services:
-    go-fault:
+    go-structured-error:
         build: .
-        container_name: go-fault
+        container_name: go-structured-error
         tty: true
         volumes:
             - .:/mount

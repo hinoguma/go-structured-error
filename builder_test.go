@@ -64,7 +64,7 @@ func TestStructuredErrorBuilder_StackTraceBuilderSkipDepth(t *testing.T) {
 			depth:   1,
 			expected: StackTrace{
 				{
-					Function: "github.com/hinoguma/go-fault.(*StructuredErrorBuilder).StackTraceBuilderSkipDepth",
+					Function: "github.com/hinoguma/go-structured-error.(*StructuredErrorBuilder).StackTraceBuilderSkipDepth",
 				},
 			},
 		},
@@ -76,7 +76,7 @@ func TestStructuredErrorBuilder_StackTraceBuilderSkipDepth(t *testing.T) {
 			depth:   1,
 			expected: StackTrace{
 				{
-					Function: "github.com/hinoguma/go-fault.builderTraceLevel5",
+					Function: "github.com/hinoguma/go-structured-error.builderTraceLevel5",
 				},
 			},
 		},
@@ -88,7 +88,7 @@ func TestStructuredErrorBuilder_StackTraceBuilderSkipDepth(t *testing.T) {
 			depth:   1,
 			expected: StackTrace{
 				{
-					Function: "github.com/hinoguma/go-fault.builderTraceLevel4",
+					Function: "github.com/hinoguma/go-structured-error.builderTraceLevel4",
 				},
 			},
 		},
@@ -100,7 +100,7 @@ func TestStructuredErrorBuilder_StackTraceBuilderSkipDepth(t *testing.T) {
 			depth:   1,
 			expected: StackTrace{
 				{
-					Function: "github.com/hinoguma/go-fault.(*StructuredErrorBuilder).StackTraceBuilderSkipDepth",
+					Function: "github.com/hinoguma/go-structured-error.(*StructuredErrorBuilder).StackTraceBuilderSkipDepth",
 				},
 			},
 		},
@@ -121,7 +121,7 @@ func TestStructuredErrorBuilder_StackTraceBuilderSkipDepth(t *testing.T) {
 				t.Errorf("expected Structured, got %T", got)
 				return
 			}
-			assertEqualsStackTrace(t, gotf.StackTrace(), tc.expected, "github.com/hinoguma/go-fault.")
+			assertEqualsStackTrace(t, gotf.StackTrace(), tc.expected, "github.com/hinoguma/go-structured-error.")
 		})
 	}
 }
@@ -141,7 +141,7 @@ func TestStructuredErrorBuilder_StackTrace(t *testing.T) {
 	}
 	expected := StackTrace{
 		{
-			Function: "github.com/hinoguma/go-fault.TestStructuredErrorBuilder_StackTrace",
+			Function: "github.com/hinoguma/go-structured-error.TestStructuredErrorBuilder_StackTrace",
 		},
 		{
 			Function: "testing.tRunner",
@@ -150,7 +150,7 @@ func TestStructuredErrorBuilder_StackTrace(t *testing.T) {
 			Function: "runtime.goexit",
 		},
 	}
-	assertEqualsStackTrace(t, gotf.StackTrace(), expected, "github.com/hinoguma/go-fault.")
+	assertEqualsStackTrace(t, gotf.StackTrace(), expected, "github.com/hinoguma/go-structured-error.")
 
 	// nil error
 	withNil := Builder(nil)
