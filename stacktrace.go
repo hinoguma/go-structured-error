@@ -12,12 +12,12 @@ func (st StackTrace) JsonValueString() string {
 	jv := "["
 	for i, item := range st {
 		if i > 0 {
-			jv += ","
+			jv += JsonItemSeparator
 		}
 		jv += "{"
-		jv += "\"file\":\"" + item.File + "\","
-		jv += "\"line\":" + strconv.Itoa(item.Line) + ","
-		jv += "\"function\":\"" + item.Function + "\""
+		jv += fmt.Sprintf(`"file":"%s"%s`, item.File, JsonItemSeparator)
+		jv += fmt.Sprintf(`"line":%s%s`, strconv.Itoa(item.Line), JsonItemSeparator)
+		jv += fmt.Sprintf(`"function":"%s"`, item.Function)
 		jv += "}"
 	}
 	jv += "]"

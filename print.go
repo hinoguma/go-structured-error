@@ -2,12 +2,14 @@ package serrors
 
 import (
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const indentation string = "    "
+const JsonItemSeparator string = ","
 
 type JsonPrinter interface {
 	Print() string
@@ -27,59 +29,87 @@ type ErrorJsonPrinter struct {
 }
 
 func (f ErrorJsonPrinter) Print() string {
-	jsonStr := `{"type":"` + f.errorType.StringWithDefaultNone() + `"`
-	if f.err == nil {
-		jsonStr += `,"message":"` + NoErrStr + `"`
-	} else {
-		escaped, ok := json.Marshal(f.err.Error())
-		if ok != nil {
-			escaped = []byte(`"` + f.err.Error() + `"`)
-		}
-		jsonStr += `,"message":` + string(escaped)
-	}
+	jsonStr := "{"
+	jsonStr += BuildJsonStringOfType(f.errorType)
+	jsonStr += JsonItemSeparator + BuildJsonStringOfMessage(f.err)
+
 	if f.when != nil {
-		jsonStr += `,"when":"` + f.when.Format(time.RFC3339) + `"`
+		jsonStr += JsonItemSeparator + BuildJsonStringOfWhen(*f.when, time.RFC3339)
 	}
 	if f.requestId != "" {
-		escaped, ok := json.Marshal(f.requestId)
-		if ok != nil {
-			escaped = []byte(`"` + f.requestId + `"`)
-		}
-		jsonStr += `,"request_id":` + string(escaped)
+		jsonStr += JsonItemSeparator + BuildJsonStringOfRequestID(f.requestId)
 	}
 
 	if len(f.tags.tags) > 0 {
-		jsonStr += `,"tags":` + f.tags.JsonValueString()
+		jsonStr += JsonItemSeparator + BuildJsonStringOfTags(f.tags)
 	}
-	if len(f.stacktrace) == 0 {
-		jsonStr += `,"stacktrace":[]`
-	} else {
-		jsonStr += `,"stacktrace":` + f.stacktrace.JsonValueString()
-	}
+
+	jsonStr += JsonItemSeparator + BuildJsonStringOfStackTrace(f.stacktrace)
+
 	if len(f.subErrors) > 0 {
-		jsonStr += `,"sub_errors":[`
-		for i, subErr := range f.subErrors {
-			if subErr == nil {
-				continue
-			}
-			var jf JsonPrinter
-			fe, ok := subErr.(HasJsonPrinter)
-			if ok {
-				jf = fe.JsonPrinter()
-			} else {
-				jf = ErrorJsonPrinter{
-					errorType: ErrorTypeNone,
-					err:       subErr,
-				}
-			}
-			if i > 0 {
-				jsonStr += `,`
-			}
-			jsonStr += jf.Print()
-		}
-		jsonStr += `]`
+		jsonStr += JsonItemSeparator + BuildJsonStringOfSubErrors(f.subErrors)
 	}
 	jsonStr += "}"
+	return jsonStr
+}
+
+func BuildJsonStringOfType(t ErrorType) string {
+	return `"type":"` + t.StringWithDefaultNone() + `"`
+}
+
+func BuildJsonStringOfMessage(err error) string {
+	if err == nil {
+		return `"message":"` + NoErrStr + `"`
+	}
+	escaped, _ := json.Marshal(err.Error())
+	return `"message":` + string(escaped)
+}
+
+func BuildJsonStringOfWhen(t time.Time, layout string) string {
+	return fmt.Sprintf(`"when":"%s"`, t.Format(layout))
+}
+
+func BuildJsonStringOfRequestID(requestId string) string {
+	escaped, _ := json.Marshal(requestId)
+	return `"request_id":` + string(escaped)
+}
+
+func BuildJsonStringOfTags(tags Tags) string {
+	return `"tags":` + tags.JsonValueString()
+}
+
+func BuildJsonStringOfStackTrace(stacktrace StackTrace) string {
+	if len(stacktrace) == 0 {
+		return `"stacktrace":[]`
+	}
+	return `"stacktrace":` + stacktrace.JsonValueString()
+}
+
+func BuildJsonStringOfSubErrors(subErrors []error) string {
+	jsonStr := `"sub_errors":[`
+	isFirst := true
+	for _, subErr := range subErrors {
+		if subErr == nil {
+			continue
+		}
+		var jf JsonPrinter
+		fe, ok := subErr.(HasJsonPrinter)
+		if ok {
+			jf = fe.JsonPrinter()
+		} else {
+			jf = ErrorJsonPrinter{
+				errorType: ErrorTypeNone,
+				err:       subErr,
+			}
+		}
+		if isFirst {
+			isFirst = false
+		} else {
+			jsonStr += `,`
+		}
+		jsonStr += jf.Print()
+	}
+	jsonStr += `]`
 	return jsonStr
 }
 
