@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 import (
 	"fmt"
@@ -53,9 +53,9 @@ func NewStackTrace(skip int, maxDepth int) StackTrace {
 }
 
 type StackTraceItem struct {
-	File     string
-	Line     int
-	Function string
+	File     string `json:"file"`
+	Line     int    `json:"line"`
+	Function string `json:"function"`
 }
 
 func (item StackTraceItem) String() string {

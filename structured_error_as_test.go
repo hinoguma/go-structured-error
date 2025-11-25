@@ -1,21 +1,21 @@
-package fault
+package go_fault
 
 import (
 	"errors"
 	"testing"
 )
 
-func TestFaultError_As(t *testing.T) {
+func TestStructuredError_As(t *testing.T) {
 
 	ne := errors.New("go standard error")
-	ca := newTestCustomNonFaultError("custom non-fault error", 300)
-	cb := newTestCustomFaultError1(100)
+	ca := newTestCustomNonStructuredError("custom non-fault error", 300)
+	cb := newTestCustomStructuredError1(100)
 
 	/**
 	Normal E = NE = error
 	Custom A = CA = custom error not implementing ExtendError
 	Custom B = CB = custom error implementing ExtendError
-	Fault E  = FE = FaultError
+	Fault E  = FE = StructuredError
 
 	Scenarios:
 	1. FE has NE as FE -> true
@@ -43,8 +43,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "1. FE has NE as FE -> true",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: ne}
-				var target *FaultError
+				fe := &StructuredError{err: ne}
+				var target *StructuredError
 				expectedOk := true
 
 				// execute
@@ -60,8 +60,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "2. FE has NE as CA -> false",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: ne}
-				var target *testCustomNonFaultError
+				fe := &StructuredError{err: ne}
+				var target *testCustomNonStructuredError
 				expectedOk := false
 
 				// execute
@@ -77,8 +77,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "3. FE has NE as CB -> false",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: ne}
-				var target *testCustomFaultError1
+				fe := &StructuredError{err: ne}
+				var target *testCustomStructuredError1
 				expectedOk := false
 
 				// execute
@@ -94,8 +94,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "4. FE has CA as CA -> true",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: ca}
-				var target *testCustomNonFaultError
+				fe := &StructuredError{err: ca}
+				var target *testCustomNonStructuredError
 				expectedOk := true
 
 				// execute
@@ -111,8 +111,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "5. FE has CA as CB -> false",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: ca}
-				var target *testCustomFaultError1
+				fe := &StructuredError{err: ca}
+				var target *testCustomStructuredError1
 				expectedOk := false
 
 				// execute
@@ -128,8 +128,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "6. FE has CB as CB -> true",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: cb}
-				var target *testCustomFaultError1
+				fe := &StructuredError{err: cb}
+				var target *testCustomStructuredError1
 				expectedOk := true
 
 				// execute
@@ -145,8 +145,8 @@ func TestFaultError_As(t *testing.T) {
 			label: "7. FE has CB as CA -> false",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				fe := &FaultError{err: cb}
-				var target *testCustomNonFaultError
+				fe := &StructuredError{err: cb}
+				var target *testCustomNonStructuredError
 				expectedOk := false
 
 				// execute
@@ -162,9 +162,9 @@ func TestFaultError_As(t *testing.T) {
 			label: "8. CB has NE as CB -> true",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				err := newTestCustomFaultError1(200)
+				err := newTestCustomStructuredError1(200)
 				_ = err.SetErr(ne)
-				var target *testCustomFaultError1
+				var target *testCustomStructuredError1
 				expectedOk := true
 
 				// execute
@@ -180,9 +180,9 @@ func TestFaultError_As(t *testing.T) {
 			label: "9. CB has CA as CA -> true",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				err := newTestCustomFaultError1(200)
+				err := newTestCustomStructuredError1(200)
 				_ = err.SetErr(ca)
-				var target *testCustomNonFaultError
+				var target *testCustomNonStructuredError
 				expectedOk := true
 
 				// execute
@@ -198,9 +198,9 @@ func TestFaultError_As(t *testing.T) {
 			label: "10. CB has CA as FE -> false",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				err := newTestCustomFaultError1(200)
+				err := newTestCustomStructuredError1(200)
 				_ = err.SetErr(ca)
-				var target *FaultError
+				var target *StructuredError
 				expectedOk := false
 
 				// execute
@@ -216,9 +216,9 @@ func TestFaultError_As(t *testing.T) {
 			label: "11. CB has FE as FE -> true",
 			scenarioFunc: func(t *testing.T) {
 				// prepare
-				err := newTestCustomFaultError1(200)
-				_ = err.SetErr(&FaultError{err: ne})
-				var target *FaultError
+				err := newTestCustomStructuredError1(200)
+				_ = err.SetErr(&StructuredError{err: ne})
+				var target *StructuredError
 				expectedOk := true
 
 				// execute

@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 import (
 	"errors"
@@ -6,15 +6,15 @@ import (
 	"time"
 )
 
-func TestJsonFormatter_Format(t *testing.T) {
+func TestErrorJsonPrinter_Print(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter JsonFormatter
+		formatter ErrorJsonPrinter
 		expected  string
 	}{
 		{
 			label: "required fields",
-			formatter: JsonFormatter{
+			formatter: ErrorJsonPrinter{
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
 				stacktrace: StackTrace{
@@ -36,7 +36,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "with when and requestId",
-			formatter: JsonFormatter{
+			formatter: ErrorJsonPrinter{
 				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
 				stacktrace: make(StackTrace, 0),
@@ -50,7 +50,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "tags",
-			formatter: JsonFormatter{
+			formatter: ErrorJsonPrinter{
 				err:        errors.New("error with tags"),
 				stacktrace: make(StackTrace, 0),
 				when:       nil,
@@ -70,7 +70,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "empty tags",
-			formatter: JsonFormatter{
+			formatter: ErrorJsonPrinter{
 				err:        errors.New("error with empty tags"),
 				stacktrace: make(StackTrace, 0),
 				when:       nil,
@@ -84,14 +84,14 @@ func TestJsonFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "sub errors",
-			formatter: JsonFormatter{
+			formatter: ErrorJsonPrinter{
 				err:        errors.New("main error"),
 				stacktrace: make(StackTrace, 0),
 				when:       nil,
 				requestId:  "",
 				subErrors: []error{
 					errors.New("sub error 1"),
-					&FaultError{
+					&StructuredError{
 						err:       errors.New("sub error 2"),
 						errorType: ErrorType("testType2"),
 						stacktrace: StackTrace{
@@ -104,7 +104,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "empty",
-			formatter: JsonFormatter{
+			formatter: ErrorJsonPrinter{
 				err:        nil,
 				stacktrace: nil,
 				when:       nil,
@@ -116,7 +116,7 @@ func TestJsonFormatter_Format(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.formatter.Format()
+			got := tc.formatter.Print()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}
@@ -283,7 +283,7 @@ func TestVerboseFormatter_Format(t *testing.T) {
 				requestId:  "",
 				subErrors: []error{
 					errors.New("sub error 1"),
-					&FaultError{
+					&StructuredError{
 						err:       errors.New("sub error 2"),
 						errorType: ErrorType("testType2"),
 						stacktrace: StackTrace{
@@ -291,7 +291,7 @@ func TestVerboseFormatter_Format(t *testing.T) {
 						},
 						subErrors: []error{
 							errors.New("nested sub error"),
-							&FaultError{
+							&StructuredError{
 								err: errors.New("nested sub error 2"),
 								stacktrace: StackTrace{
 									{File: "sub_example.go", Line: 50, Function: "subFunction"},

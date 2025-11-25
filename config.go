@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 func GetMaxDepthStackTrace() int {
 	return 32

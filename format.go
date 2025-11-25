@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 import (
 	"encoding/json"
@@ -14,7 +14,11 @@ type ErrorFormatter interface {
 const NoErrStr string = "<no error>"
 const indentation string = "    "
 
-type JsonFormatter struct {
+type JsonPrinter interface {
+	Print() string
+}
+
+type ErrorJsonPrinter struct {
 	// required
 	errorType  ErrorType
 	err        error
@@ -27,7 +31,7 @@ type JsonFormatter struct {
 	subErrors []error
 }
 
-func (f JsonFormatter) Format() string {
+func (f ErrorJsonPrinter) Print() string {
 	jsonStr := `{"type":"` + f.errorType.StringWithDefaultNone() + `"`
 	if f.err == nil {
 		jsonStr += `,"message":"` + NoErrStr + `"`
@@ -63,12 +67,12 @@ func (f JsonFormatter) Format() string {
 			if subErr == nil {
 				continue
 			}
-			var jf ErrorFormatter
-			fe, ok := subErr.(interface{ JsonFormatter() ErrorFormatter })
+			var jf JsonPrinter
+			fe, ok := subErr.(HasJsonPrinter)
 			if ok {
-				jf = fe.JsonFormatter()
+				jf = fe.JsonPrinter()
 			} else {
-				jf = JsonFormatter{
+				jf = ErrorJsonPrinter{
 					errorType: ErrorTypeNone,
 					err:       subErr,
 				}
@@ -76,7 +80,7 @@ func (f JsonFormatter) Format() string {
 			if i > 0 {
 				jsonStr += `,`
 			}
-			jsonStr += jf.Format()
+			jsonStr += jf.Print()
 		}
 		jsonStr += `]`
 	}

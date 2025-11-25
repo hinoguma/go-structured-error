@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 import (
 	"errors"
@@ -8,40 +8,40 @@ import (
 
 const testErrorType1 ErrorType = "testCustom1"
 
-func newTestCustomFaultError1(code int) *testCustomFaultError1 {
-	return &testCustomFaultError1{
-		FaultError: FaultError{
+func newTestCustomStructuredError1(code int) *testCustomStructuredError1 {
+	return &testCustomStructuredError1{
+		StructuredError: StructuredError{
 			errorType: testErrorType1,
 		},
 		code: code,
 	}
 }
 
-func newTestCustomNonFaultError(message string, code int) *testCustomNonFaultError {
-	return &testCustomNonFaultError{
+func newTestCustomNonStructuredError(message string, code int) *testCustomNonStructuredError {
+	return &testCustomNonStructuredError{
 		message: message,
 		code:    code,
 	}
 }
 
-type testCustomFaultError1 struct {
-	FaultError
+type testCustomStructuredError1 struct {
+	StructuredError
 	code int
 }
 
-type testCustomNonFaultError struct {
+type testCustomNonStructuredError struct {
 	message string
 	code    int
 }
 
-func (e *testCustomNonFaultError) Error() string {
+func (e *testCustomNonStructuredError) Error() string {
 	return fmt.Sprintf("non-fault error: code:%d message:%s", e.code, e.message)
 }
 
-func TestFaultError_Is(t *testing.T) {
+func TestStructuredError_Is(t *testing.T) {
 	ne := errors.New("go standard error")
-	ca := newTestCustomNonFaultError("custom non-fault error", 300)
-	cb := newTestCustomFaultError1(100)
+	ca := newTestCustomNonStructuredError("custom non-fault error", 300)
+	cb := newTestCustomStructuredError1(100)
 
 	testCases := []struct {
 		label    string
@@ -51,9 +51,9 @@ func TestFaultError_Is(t *testing.T) {
 	}{
 		/**
 		Normal E = NE = error
-		Custom A = CA = custom error not implementing FaultError
-		Custom B = CB = custom error implementing FaultError
-		Fault  E = FE = FaultError
+		Custom A = CA = custom error not implementing StructuredError
+		Custom B = CB = custom error implementing StructuredError
+		Fault  E = FE = StructuredError
 
 		Scenarios:
 		1. FE has NE is FE has same NE -> true
@@ -71,55 +71,55 @@ func TestFaultError_Is(t *testing.T) {
 		*/
 		{
 			label:    "1. FE has NE is FE has same NE -> true",
-			err:      &FaultError{err: ne},
-			target:   &FaultError{err: ne},
+			err:      &StructuredError{err: ne},
+			target:   &StructuredError{err: ne},
 			expected: true,
 		},
 		{
 			label:    "2. FE has NE is FE has dif NE  -> false",
-			err:      &FaultError{err: ne},
-			target:   &FaultError{err: errors.New("another go std error")},
+			err:      &StructuredError{err: ne},
+			target:   &StructuredError{err: errors.New("another go std error")},
 			expected: false,
 		},
 		{
 			label:    "3. FE has CA is FE has same CA -> true",
-			err:      &FaultError{err: ca},
-			target:   &FaultError{err: ca},
+			err:      &StructuredError{err: ca},
+			target:   &StructuredError{err: ca},
 			expected: true,
 		},
 		{
 			label:    "4. FE has CA is FE has dif CA -> false",
-			err:      &FaultError{err: cb},
-			target:   &FaultError{err: newTestCustomNonFaultError("custom non-fault error", 300)},
+			err:      &StructuredError{err: cb},
+			target:   &StructuredError{err: newTestCustomNonStructuredError("custom non-fault error", 300)},
 			expected: false,
 		},
 		{
 			label:    "5. CB has NE is CB has same NE -> true",
-			err:      newTestCustomFaultError1(100).SetErr(ne),
-			target:   newTestCustomFaultError1(100).SetErr(ne),
+			err:      newTestCustomStructuredError1(100).SetErr(ne),
+			target:   newTestCustomStructuredError1(100).SetErr(ne),
 			expected: true,
 		},
 		{
 			label:    "6. CB has NE is CB has dif NE -> false",
-			err:      newTestCustomFaultError1(100).SetErr(ne),
-			target:   newTestCustomFaultError1(100).SetErr(errors.New("another go std error")),
+			err:      newTestCustomStructuredError1(100).SetErr(ne),
+			target:   newTestCustomStructuredError1(100).SetErr(errors.New("another go std error")),
 			expected: false,
 		},
 		{
 			label:    "7. CB has NE is FE has same NE -> false",
-			err:      newTestCustomFaultError1(100).SetErr(ne),
-			target:   &FaultError{err: ne},
+			err:      newTestCustomStructuredError1(100).SetErr(ne),
+			target:   &StructuredError{err: ne},
 			expected: false,
 		},
 		{
 			label:    "8. FE has nil target is nil -> false",
-			err:      &FaultError{err: nil},
+			err:      &StructuredError{err: nil},
 			target:   nil,
 			expected: false,
 		},
 		{
 			label:    "9. NE is FE has same NE -> true",
-			err:      &FaultError{err: ne},
+			err:      &StructuredError{err: ne},
 			target:   ne,
 			expected: true,
 		},
@@ -145,31 +145,31 @@ func TestIsType(t *testing.T) {
 	}{
 		{
 			label:    "Initial FE is None -> true",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			target:   ErrorTypeNone,
 			expected: true,
 		},
 		{
 			label:    "Initial FE is testCustom1 -> true",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			target:   testErrorType1,
 			expected: false,
 		},
 		{
 			label:    "FE with type testCustom1 -> true",
-			err:      &FaultError{errorType: testErrorType1},
+			err:      &StructuredError{errorType: testErrorType1},
 			target:   testErrorType1,
 			expected: true,
 		},
 		{
 			label:    "testCustom1 is testCustom1 -> true",
-			err:      newTestCustomFaultError1(100),
+			err:      newTestCustomStructuredError1(100),
 			target:   testErrorType1,
 			expected: true,
 		},
 		{
 			label:    "testCustom1 is None -> false",
-			err:      newTestCustomFaultError1(100),
+			err:      newTestCustomStructuredError1(100),
 			target:   ErrorTypeNone,
 			expected: false,
 		},
@@ -180,14 +180,14 @@ func TestIsType(t *testing.T) {
 			expected: false,
 		},
 		{
-			label:    "warped FaultError with type testCustom1 is None -> false",
-			err:      fmt.Errorf("wrapping fault error: %w", newTestCustomFaultError1(100)),
+			label:    "warped StructuredError with type testCustom1 is None -> false",
+			err:      fmt.Errorf("wrapping fault error: %w", newTestCustomStructuredError1(100)),
 			target:   ErrorTypeNone,
 			expected: false,
 		},
 		{
-			label:    "warped FaultError with type testCustom1 is testCustom1 -> true",
-			err:      fmt.Errorf("wrapping fault error: %w", newTestCustomFaultError1(100)),
+			label:    "warped StructuredError with type testCustom1 is testCustom1 -> true",
+			err:      fmt.Errorf("wrapping fault error: %w", newTestCustomStructuredError1(100)),
 			target:   testErrorType1,
 			expected: true,
 		},

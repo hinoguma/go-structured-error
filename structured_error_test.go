@@ -1,4 +1,4 @@
-package fault
+package go_fault
 
 import (
 	"errors"
@@ -8,93 +8,15 @@ import (
 	"time"
 )
 
-func assertFaultError(t *testing.T, got, expected *FaultError) {
-	if got.err != expected.err {
-		t.Errorf("expected err %v, got %v", expected.err, got.err)
-	}
-	if got.errorType != expected.errorType {
-		t.Errorf("expected errorType %v, got %v", expected.errorType, got.errorType)
-	}
-	if got.when == nil || expected.when == nil {
-		if got.when != expected.when {
-			t.Errorf("expected when %v, got %v", expected.when, got.when)
-		}
-	} else {
-		if !got.when.Equal(*expected.when) {
-			t.Errorf("expected when %v, got %v", *expected.when, *got.when)
-		}
-	}
-	if got.requestId != expected.requestId {
-		t.Errorf("expected requestId %v, got %v", expected.requestId, got.requestId)
-	}
-	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-fault")
-	assertEqualsTags(t, got.tags, expected.tags)
-	if len(got.subErrors) != len(expected.subErrors) {
-		t.Errorf("expected subErrors length %v, got %v", len(expected.subErrors), len(got.subErrors))
-	} else {
-		for i := range got.subErrors {
-			if got.subErrors[i] != expected.subErrors[i] {
-				t.Errorf("expected subError %v, got %v", expected.subErrors[i], got.subErrors[i])
-			}
-		}
-	}
-}
-
-func assertFaultErrorWithErrorValue(t *testing.T, got, expected *FaultError) {
-	if got.err == nil || expected.err == nil {
-		if got.err != expected.err {
-			t.Errorf("expected err %v, got %v", expected.err, got.err)
-		}
-	} else {
-		if got.err.Error() != expected.err.Error() {
-			t.Errorf("expected err %v, got %v", expected.err, got.err)
-		}
-	}
-	if got.errorType != expected.errorType {
-		t.Errorf("expected errorType %v, got %v", expected.errorType, got.errorType)
-	}
-	if got.when == nil || expected.when == nil {
-		if got.when != expected.when {
-			t.Errorf("expected when %v, got %v", expected.when, got.when)
-		}
-	} else {
-		if !got.when.Equal(*expected.when) {
-			t.Errorf("expected when %v, got %v", *expected.when, *got.when)
-		}
-	}
-	if got.requestId != expected.requestId {
-		t.Errorf("expected requestId %v, got %v", expected.requestId, got.requestId)
-	}
-	assertEqualsStackTrace(t, got.stacktrace, expected.stacktrace, "github.com/hinoguma/go-fault")
-	assertEqualsTags(t, got.tags, expected.tags)
-	if len(got.subErrors) != len(expected.subErrors) {
-		t.Errorf("expected subErrors length %v, got %v", len(expected.subErrors), len(got.subErrors))
-	} else {
-		for i := range got.subErrors {
-			gotSubErr := got.subErrors[i]
-			expectedSubErr := expected.subErrors[i]
-			if gotSubErr == nil || expectedSubErr == nil {
-				if gotSubErr != expectedSubErr {
-					t.Errorf("expected subError %v, got %v", expectedSubErr, gotSubErr)
-				}
-			} else {
-				if gotSubErr.Error() != expectedSubErr.Error() {
-					t.Errorf("expected subError %v, got %v", expectedSubErr, gotSubErr)
-				}
-			}
-		}
-	}
-}
-
-func TestFaultError_Type(t *testing.T) {
+func TestStructuredError_Type(t *testing.T) {
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		expected ErrorType
 	}{
 		{
 			label:    "initial type",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			expected: ErrorTypeNone,
 		},
 	}
@@ -108,20 +30,20 @@ func TestFaultError_Type(t *testing.T) {
 	}
 }
 
-func TestFaultError_When(t *testing.T) {
+func TestStructuredError_When(t *testing.T) {
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		expected *time.Time
 	}{
 		{
 			label:    "when is nil",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			expected: nil,
 		},
 		{
 			label: "when is set",
-			err: &FaultError{
+			err: &StructuredError{
 				when: func() *time.Time {
 					t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 					return &t
@@ -150,20 +72,20 @@ func TestFaultError_When(t *testing.T) {
 	}
 }
 
-func TestFaultError_RequestID(t *testing.T) {
+func TestStructuredError_RequestID(t *testing.T) {
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		expected string
 	}{
 		{
 			label:    "empty request ID",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			expected: "",
 		},
 		{
 			label: "set request ID",
-			err: &FaultError{
+			err: &StructuredError{
 				requestId: "12345",
 			},
 			expected: "12345",
@@ -179,25 +101,25 @@ func TestFaultError_RequestID(t *testing.T) {
 	}
 }
 
-func TestFaultError_StackTrace(t *testing.T) {
+func TestStructuredError_StackTrace(t *testing.T) {
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		expected StackTrace
 	}{
 		{
 			label:    "empty stack trace",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			expected: StackTrace{},
 		},
 		{
 			label: "stack trace with items",
-			err: &FaultError{
+			err: &StructuredError{
 				stacktrace: StackTrace{
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestFaultError_StackTrace",
+						Function: "github.com/hinoguma/go-fault/structurederror.TestStructuredError_StackTrace",
 					},
 				},
 			},
@@ -205,7 +127,7 @@ func TestFaultError_StackTrace(t *testing.T) {
 				{
 					File:     "fault_test.go",
 					Line:     75,
-					Function: "github.com/hinoguma/go-fault.TestFaultError_StackTrace",
+					Function: "github.com/hinoguma/go-fault/structurederror.TestStructuredError_StackTrace",
 				},
 			},
 		},
@@ -214,30 +136,30 @@ func TestFaultError_StackTrace(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			got := tc.err.StackTrace()
-			assertEqualsStackTrace(t, got, tc.expected, "github.com/hinoguma/go-fault")
+			assertEqualsStackTrace(t, got, tc.expected, "github.com/hinoguma/go-fault/structurederror.")
 		})
 	}
 }
 
-func TestFaultError_Setters(t *testing.T) {
+func TestStructuredError_Setters(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	testCases := []struct {
 		label    string
-		err      *FaultError
-		setFunc  func(err *FaultError)
-		expected *FaultError
+		err      *StructuredError
+		setFunc  func(err *StructuredError)
+		expected *StructuredError
 	}{
 		{
 			label: "set when, requestId and error",
-			err:   &FaultError{},
-			setFunc: func(err *FaultError) {
+			err:   &StructuredError{},
+			setFunc: func(err *StructuredError) {
 				t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
 				_ = err.SetWhen(t).
 					SetType("testType").
 					SetRequestID("12345").
 					SetErr(stdErr)
 			},
-			expected: &FaultError{
+			expected: &StructuredError{
 				errorType: "testType",
 				when: func() *time.Time {
 					t := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
@@ -252,29 +174,29 @@ func TestFaultError_Setters(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			tc.setFunc(tc.err)
-			assertFaultError(t, tc.err, tc.expected)
+			assertStructuredError(t, tc.err, tc.expected)
 		})
 	}
 }
 
-func TestFaultError_AddTag(t *testing.T) {
+func TestStructuredError_AddTag(t *testing.T) {
 	testCases := []struct {
 		label    string
-		err      *FaultError
-		addFunc  func(err *FaultError)
-		expected *FaultError
+		err      *StructuredError
+		addFunc  func(err *StructuredError)
+		expected *StructuredError
 	}{
 		{
 			label: "add tags",
-			err:   &FaultError{},
-			addFunc: func(err *FaultError) {
+			err:   &StructuredError{},
+			addFunc: func(err *StructuredError) {
 				_ = err.AddTagString("tag1", "value1")
 				_ = err.AddTagInt("tag2", 42)
 				_ = err.AddTagBool("tag3", true)
 				_ = err.AddTagFloat("tag4", 3.14)
 				_ = err.AddTagSafe("tag5", StringTagValue("safeValue"))
 			},
-			expected: &FaultError{
+			expected: &StructuredError{
 				tags: Tags{
 					tags: []Tag{
 						{Key: "tag1", Value: StringTagValue("value1")},
@@ -298,21 +220,21 @@ func TestFaultError_AddTag(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			tc.addFunc(tc.err)
-			assertFaultError(t, tc.err, tc.expected)
+			assertStructuredError(t, tc.err, tc.expected)
 		})
 	}
 }
 
-func TestFaultError_DeleteTag(t *testing.T) {
+func TestStructuredError_DeleteTag(t *testing.T) {
 	testCases := []struct {
 		label     string
-		err       *FaultError
+		err       *StructuredError
 		deleteKey string
-		expected  *FaultError
+		expected  *StructuredError
 	}{
 		{
 			label: "delete existing tag",
-			err: &FaultError{
+			err: &StructuredError{
 				tags: Tags{
 					tags: []Tag{
 						{Key: "tag1", Value: StringTagValue("value1")},
@@ -325,7 +247,7 @@ func TestFaultError_DeleteTag(t *testing.T) {
 				},
 			},
 			deleteKey: "tag1",
-			expected: &FaultError{
+			expected: &StructuredError{
 				tags: Tags{
 					tags: []Tag{
 						{Key: "tag2", Value: IntTagValue(42)},
@@ -338,7 +260,7 @@ func TestFaultError_DeleteTag(t *testing.T) {
 		},
 		{
 			label: "delete non-existing tag",
-			err: &FaultError{
+			err: &StructuredError{
 				tags: Tags{
 					tags: []Tag{
 						{Key: "tag1", Value: StringTagValue("value1")},
@@ -349,7 +271,7 @@ func TestFaultError_DeleteTag(t *testing.T) {
 				},
 			},
 			deleteKey: "tag2",
-			expected: &FaultError{
+			expected: &StructuredError{
 				tags: Tags{
 					tags: []Tag{
 						{Key: "tag1", Value: StringTagValue("value1")},
@@ -362,44 +284,44 @@ func TestFaultError_DeleteTag(t *testing.T) {
 		},
 		{
 			label:     "delete tag from empty tags",
-			err:       &FaultError{},
+			err:       &StructuredError{},
 			deleteKey: "tag1",
-			expected:  &FaultError{},
+			expected:  &StructuredError{},
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			_ = tc.err.DeleteTag(tc.deleteKey)
-			assertFaultError(t, tc.err, tc.expected)
+			assertStructuredError(t, tc.err, tc.expected)
 		})
 	}
 }
 
-func TestFaultError_AddSubError(t *testing.T) {
+func TestStructuredError_AddSubError(t *testing.T) {
 	sub1 := errors.New("sub error 1")
 	sub2 := errors.New("sub error 2")
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		subErr   error
-		expected *FaultError
+		expected *StructuredError
 	}{
 		{
 			label:  "add sub-error",
-			err:    &FaultError{},
+			err:    &StructuredError{},
 			subErr: sub1,
-			expected: &FaultError{
+			expected: &StructuredError{
 				subErrors: []error{sub1},
 			},
 		},
 		{
 			label: "add another sub-error",
-			err: &FaultError{
+			err: &StructuredError{
 				subErrors: []error{sub1},
 			},
 			subErr: sub2,
-			expected: &FaultError{
+			expected: &StructuredError{
 				subErrors: []error{sub1, sub2},
 			},
 		},
@@ -407,27 +329,27 @@ func TestFaultError_AddSubError(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			_ = tc.err.AddSubError(tc.subErr)
-			assertFaultError(t, tc.err, tc.expected)
+			assertStructuredError(t, tc.err, tc.expected)
 		})
 	}
 }
 
-func TestFaultError_Error(t *testing.T) {
+func TestStructuredError_Error(t *testing.T) {
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		expected string
 	}{
 		{
 			label: "basic error message",
-			err: &FaultError{
+			err: &StructuredError{
 				err: errors.New("basic error"),
 			},
 			expected: "[Type: none] basic error",
 		},
 		{
 			label:    "has no underlying error",
-			err:      &FaultError{},
+			err:      &StructuredError{},
 			expected: "[Type: none] <no error>",
 		},
 	}
@@ -442,9 +364,9 @@ func TestFaultError_Error(t *testing.T) {
 	}
 }
 
-func TestNewRawFaultError(t *testing.T) {
+func TestNewRawStructuredError(t *testing.T) {
 	stdErr := errors.New("standard error")
-	expected := &FaultError{
+	expected := &StructuredError{
 		errorType:  ErrorTypeNone,
 		err:        stdErr,
 		stacktrace: make(StackTrace, 0),
@@ -454,53 +376,8 @@ func TestNewRawFaultError(t *testing.T) {
 		subErrors:  make([]error, 0),
 	}
 
-	got := NewRawFaultError(stdErr)
-	assertFaultError(t, got, expected)
-}
-
-func TestNew(t *testing.T) {
-	testCases := []struct {
-		label    string
-		message  string
-		expected *FaultError
-	}{
-		{
-			label:   "basic fault error",
-			message: "fault occurred",
-			expected: &FaultError{
-				errorType: ErrorTypeNone,
-				err:       errors.New("fault occurred"),
-				stacktrace: []StackTraceItem{
-					{
-						File:     "ignored",
-						Line:     500,
-						Function: "github.com/hinoguma/go-fault.TestNew.func1",
-					},
-					{
-						File:     "ignored",
-						Line:     -1,
-						Function: "testing.tRunner",
-					},
-					{
-						File:     "ignored",
-						Line:     -1,
-						Function: "runtime.goexit",
-					},
-				},
-				when:      nil,
-				requestId: "",
-				tags:      NewTags(),
-				subErrors: make([]error, 0),
-			},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.label, func(t *testing.T) {
-			got := New(tc.message) // 500
-			assertFaultErrorWithErrorValue(t, got, tc.expected)
-		})
-	}
+	got := NewRawStructuredError(stdErr)
+	assertStructuredError(t, got, expected)
 }
 
 func TestNewWithSkipAndDepth(t *testing.T) {
@@ -509,20 +386,18 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 		label    string
 		skip     int
 		depth    int
-		expected *FaultError
+		expected *StructuredError
 	}{
 		{
 			label: "skip 0 starts capturing from NewWithSkipAndDepth",
 			skip:  0,
 			depth: 1,
-			expected: &FaultError{
+			expected: &StructuredError{
 				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
-						File:     "ignored",
-						Line:     37,
-						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
+						Function: "github.com/hinoguma/go-fault/structurederror.NewWithSkipAndDepth",
 					},
 				},
 				tags: NewTags(),
@@ -532,14 +407,12 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 			label: "skip -1 treated as skip 0",
 			skip:  -1,
 			depth: 1,
-			expected: &FaultError{
+			expected: &StructuredError{
 				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
-						File:     "ignored",
-						Line:     37,
-						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
+						Function: "github.com/hinoguma/go-fault/structurederror.NewWithSkipAndDepth",
 					},
 				},
 				tags: NewTags(),
@@ -550,34 +423,34 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			got := NewWithSkipAndDepth(stdErr, tc.skip, tc.depth)
-			assertFaultErrorWithErrorValue(t, got, tc.expected)
+			assertStructuredErrorWithErrorValue(t, got, tc.expected)
 		})
 	}
 }
 
-func TestFaultError_JsonFormatter(t *testing.T) {
+func TestStructuredError_JsonPrinter(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
-	faultErr := &FaultError{
+	faultErr := &StructuredError{
 		errorType: ErrorTypeNone,
 		err:       stdErr,
 	}
 
 	testCases := []struct {
 		label    string
-		err      *FaultError
-		expected ErrorFormatter
+		err      *StructuredError
+		expected JsonPrinter
 	}{
 		{
 			label: "all props",
-			err: &FaultError{
+			err: &StructuredError{
 				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonFormat",
+						Function: "github.com/hinoguma/go-fault/structurederror.TestStructuredError_JsonFormat",
 					},
 				},
 				when:      &when,
@@ -592,14 +465,14 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 				},
 				subErrors: []error{stdErr, faultErr},
 			},
-			expected: JsonFormatter{
+			expected: ErrorJsonPrinter{
 				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonFormat",
+						Function: "github.com/hinoguma/go-fault/structurederror.TestStructuredError_JsonFormat",
 					},
 				},
 				when:      &when,
@@ -619,7 +492,7 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.err.JsonFormatter()
+			got := tc.err.JsonPrinter()
 			if !reflect.DeepEqual(got, tc.expected) {
 				t.Errorf("expected JsonFormat %v, got %v", tc.expected, got)
 			}
@@ -627,29 +500,29 @@ func TestFaultError_JsonFormatter(t *testing.T) {
 	}
 }
 
-func TestFaultError_JsonString(t *testing.T) {
+func TestStructuredError_JsonString(t *testing.T) {
 	stdErr := errors.New("go standard error")
 	when := time.Date(2024, 6, 1, 12, 0, 0, 0, time.UTC)
-	faultErr := &FaultError{
+	faultErr := &StructuredError{
 		errorType: ErrorTypeNone,
 		err:       errors.New("go standard error2"),
 	}
 
 	testCases := []struct {
 		label    string
-		err      *FaultError
+		err      *StructuredError
 		expected string
 	}{
 		{
 			label: "all props",
-			err: &FaultError{
+			err: &StructuredError{
 				errorType: ErrorTypeNone,
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestFaultError_JsonString",
+						Function: "github.com/hinoguma/go-fault/structurederror.TestStructuredError_JsonString",
 					},
 				},
 				when:      &when,
@@ -664,7 +537,7 @@ func TestFaultError_JsonString(t *testing.T) {
 				},
 				subErrors: []error{stdErr, faultErr},
 			},
-			expected: `{"type":"none","message":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1"},"stacktrace":[{"file":"fault_test.go","line":75,"function":"github.com/hinoguma/go-fault.TestFaultError_JsonString"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}`,
+			expected: `{"type":"none","message":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1"},"stacktrace":[{"file":"fault_test.go","line":75,"function":"github.com/hinoguma/go-fault/structurederror.TestStructuredError_JsonString"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}`,
 		},
 	}
 
@@ -678,11 +551,11 @@ func TestFaultError_JsonString(t *testing.T) {
 	}
 }
 
-func TestFaultError_Format(t *testing.T) {
+func TestStructuredError_Format(t *testing.T) {
 
 	testCases := []struct {
 		label         string
-		err           *FaultError
+		err           *StructuredError
 		expectedS     string
 		expectedV     string
 		expectedVPlus string
@@ -690,7 +563,7 @@ func TestFaultError_Format(t *testing.T) {
 	}{
 		{
 			label: "basic format",
-			err: &FaultError{
+			err: &StructuredError{
 				errorType: ErrorTypeNone,
 				err:       errors.New("basic error"),
 			},
@@ -719,63 +592,6 @@ func TestFaultError_Format(t *testing.T) {
 			gotT := fmt.Sprintf("%q", tc.err)
 			if gotT != tc.expectedQ {
 				t.Errorf("expectedQ format %v, got %v", tc.expectedQ, gotT)
-			}
-		})
-	}
-}
-
-func TestToFault(t *testing.T) {
-	stdErr := errors.New("standard error")
-	testCases := []struct {
-		label    string
-		err      error
-		expected Fault
-	}{
-		{
-			label:    "nil error",
-			err:      nil,
-			expected: nil,
-		},
-		{
-			label: "convert standard error",
-			err:   errors.New("standard error"),
-			expected: &FaultError{
-				errorType:  ErrorTypeNone,
-				err:        stdErr,
-				stacktrace: make(StackTrace, 0),
-				tags:       NewTags(),
-				subErrors:  make([]error, 0),
-			},
-		},
-		{
-			label: "already a FaultError",
-			err: &FaultError{
-				errorType:  ErrorTypeNone,
-				err:        stdErr,
-				stacktrace: make(StackTrace, 0),
-				tags:       NewTags(),
-				subErrors:  make([]error, 0),
-			},
-			expected: &FaultError{
-				errorType:  ErrorTypeNone,
-				err:        stdErr,
-				stacktrace: make(StackTrace, 0),
-				tags:       NewTags(),
-				subErrors:  make([]error, 0),
-			},
-		},
-		{
-			label:    "already a Fault interface",
-			err:      &testCustomFaultError1{},
-			expected: &testCustomFaultError1{},
-		},
-	}
-
-	for _, tc := range testCases {
-		t.Run(tc.label, func(t *testing.T) {
-			got := ToFault(tc.err)
-			if !reflect.DeepEqual(got, tc.expected) {
-				t.Errorf("expected Fault %v, got %v", tc.expected, got)
 			}
 		})
 	}

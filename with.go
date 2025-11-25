@@ -1,22 +1,24 @@
-package fault
+package go_fault
 
-import "time"
+import (
+	"time"
+)
 
-func With(err error, options ...WithFunc) Fault {
+func With(err error, options ...WithFunc) error {
 	if err == nil {
-		return nil
+		err = ToStructuredError(err)
 	}
 	for _, opt := range options {
 		err = opt(err)
 	}
-	return nil
+	return err
 }
 
 type WithFunc func(err error) error
 
 func WithRequestID(id string) WithFunc {
 	return func(err error) error {
-		fe := ToFault(err)
+		fe := ToStructuredError(err)
 		if fe == nil {
 			return nil
 		}
@@ -27,7 +29,7 @@ func WithRequestID(id string) WithFunc {
 
 func WithWhen(t time.Time) WithFunc {
 	return func(err error) error {
-		fe := ToFault(err)
+		fe := ToStructuredError(err)
 		if fe == nil {
 			return nil
 		}
@@ -38,7 +40,7 @@ func WithWhen(t time.Time) WithFunc {
 
 func WithType(t ErrorType) WithFunc {
 	return func(err error) error {
-		fe := ToFault(err)
+		fe := ToStructuredError(err)
 		if fe == nil {
 			return nil
 		}
@@ -49,7 +51,7 @@ func WithType(t ErrorType) WithFunc {
 
 func WithTagSafe(key string, value TagValue) WithFunc {
 	return func(err error) error {
-		fe := ToFault(err)
+		fe := ToStructuredError(err)
 		if fe == nil {
 			return nil
 		}
