@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import (
 	"runtime"

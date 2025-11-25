@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 func ToJsonString(err error) string {
 	if err != nil {

@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 func GetMaxDepthStackTrace() int {
 	return 32
