@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import "time"
 
@@ -10,7 +10,7 @@ func Builder(err error) *StructuredErrorBuilder {
 }
 
 type StructuredErrorBuilder struct {
-	err Structured
+	err SError
 }
 
 func (w *StructuredErrorBuilder) Build() error {

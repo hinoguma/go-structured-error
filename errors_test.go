@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import (
 	"errors"
@@ -304,10 +304,10 @@ func TestWrap(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(Structured)
-			fe, gotOk := got.(Structured)
+			expectedFe, expectedOk := tc.expected.(SError)
+			fe, gotOk := got.(SError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type SError: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
 				assertEqualsStructuredWithoutStackTrace(t, fe, expectedFe)
@@ -380,10 +380,10 @@ func TestLift(t *testing.T) {
 				}
 				return
 			}
-			expectedFe, expectedOk := tc.expected.(Structured)
-			fe, gotOk := got.(Structured)
+			expectedFe, expectedOk := tc.expected.(SError)
+			fe, gotOk := got.(SError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type SError: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
 				assertEqualsStructuredWithoutStackTrace(t, fe, expectedFe)
@@ -413,7 +413,7 @@ func TestNew(t *testing.T) {
 				fe := NewRawStructuredError(errors.New("this is a test error"))
 				fe.stacktrace = StackTrace{
 					{
-						Function: "github.com/hinoguma/go-fault.TestNew.func3",
+						Function: "github.com/hinoguma/go-structured-error.TestNew.func3",
 					},
 					{
 						Function: "testing.tRunner",
@@ -432,7 +432,7 @@ func TestNew(t *testing.T) {
 				fe := NewRawStructuredError(errors.New(""))
 				fe.stacktrace = StackTrace{
 					{
-						Function: "github.com/hinoguma/go-fault.TestNew.func3",
+						Function: "github.com/hinoguma/go-structured-error.TestNew.func3",
 					},
 					{
 						Function: "testing.tRunner",
@@ -458,7 +458,7 @@ func TestNew(t *testing.T) {
 			expectedFe, expectedOk := tc.expected.(*StructuredError)
 			fe, gotOk := got.(*StructuredError)
 			if expectedOk != gotOk {
-				t.Errorf("expected type Structured: %v, got %v", expectedOk, gotOk)
+				t.Errorf("expected type SError: %v, got %v", expectedOk, gotOk)
 			}
 			if expectedOk && gotOk {
 				assertStructuredError(t, fe, expectedFe)

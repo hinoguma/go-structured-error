@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import "fmt"
 
@@ -114,7 +114,7 @@ func (tags Tags) JsonValueString() string {
 	result := "{"
 	for i, tag := range tags.tags {
 		if i > 0 {
-			result += ","
+			result += JsonItemSeparator
 		}
 		result += "\"" + tag.Key + "\":" + tag.Value.JsonValueString()
 	}

@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import (
 	"errors"
@@ -119,7 +119,7 @@ func TestStructuredError_StackTrace(t *testing.T) {
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestStructuredError_StackTrace",
+						Function: "github.com/hinoguma/go-structured-error.TestStructuredError_StackTrace",
 					},
 				},
 			},
@@ -127,7 +127,7 @@ func TestStructuredError_StackTrace(t *testing.T) {
 				{
 					File:     "fault_test.go",
 					Line:     75,
-					Function: "github.com/hinoguma/go-fault.TestStructuredError_StackTrace",
+					Function: "github.com/hinoguma/go-structured-error.TestStructuredError_StackTrace",
 				},
 			},
 		},
@@ -136,7 +136,7 @@ func TestStructuredError_StackTrace(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
 			got := tc.err.StackTrace()
-			assertEqualsStackTrace(t, got, tc.expected, "github.com/hinoguma/go-fault.")
+			assertEqualsStackTrace(t, got, tc.expected, "github.com/hinoguma/go-structured-error.")
 		})
 	}
 }
@@ -397,7 +397,7 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
-						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
+						Function: "github.com/hinoguma/go-structured-error.NewWithSkipAndDepth",
 					},
 				},
 				tags: NewTags(),
@@ -412,7 +412,7 @@ func TestNewWithSkipAndDepth(t *testing.T) {
 				err:       stdErr,
 				stacktrace: StackTrace{
 					{
-						Function: "github.com/hinoguma/go-fault.NewWithSkipAndDepth",
+						Function: "github.com/hinoguma/go-structured-error.NewWithSkipAndDepth",
 					},
 				},
 				tags: NewTags(),
@@ -450,7 +450,7 @@ func TestStructuredError_JsonPrinter(t *testing.T) {
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestStructuredError_JsonFormat",
+						Function: "github.com/hinoguma/go-structured-error.TestStructuredError_JsonFormat",
 					},
 				},
 				when:      &when,
@@ -472,7 +472,7 @@ func TestStructuredError_JsonPrinter(t *testing.T) {
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestStructuredError_JsonFormat",
+						Function: "github.com/hinoguma/go-structured-error.TestStructuredError_JsonFormat",
 					},
 				},
 				when:      &when,
@@ -522,7 +522,7 @@ func TestStructuredError_JsonString(t *testing.T) {
 					{
 						File:     "fault_test.go",
 						Line:     75,
-						Function: "github.com/hinoguma/go-fault.TestStructuredError_JsonString",
+						Function: "github.com/hinoguma/go-structured-error.TestStructuredError_JsonString",
 					},
 				},
 				when:      &when,
@@ -537,7 +537,7 @@ func TestStructuredError_JsonString(t *testing.T) {
 				},
 				subErrors: []error{stdErr, faultErr},
 			},
-			expected: `{"type":"none","message":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1"},"stacktrace":[{"file":"fault_test.go","line":75,"function":"github.com/hinoguma/go-fault.TestStructuredError_JsonString"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}`,
+			expected: `{"type":"none","message":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1"},"stacktrace":[{"file":"fault_test.go","line":75,"function":"github.com/hinoguma/go-structured-error.TestStructuredError_JsonString"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}`,
 		},
 	}
 

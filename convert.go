@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 func ToJsonString(err error) string {
 	if err != nil {
@@ -27,11 +27,11 @@ func ToStructuredError(err error) *StructuredError {
 	return fe
 }
 
-func ToStructured(err error) Structured {
+func ToStructured(err error) SError {
 	if err == nil {
 		return NewRawStructuredError(err)
 	}
-	fe, ok := err.(Structured)
+	fe, ok := err.(SError)
 	if !ok {
 		fe = NewRawStructuredError(err)
 		return fe

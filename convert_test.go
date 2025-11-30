@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import (
 	"errors"
@@ -82,7 +82,7 @@ func TestToStructured(t *testing.T) {
 	testCases := []struct {
 		label    string
 		err      error
-		expected Structured
+		expected SError
 	}{
 		{
 			label: "nil error",
@@ -126,7 +126,7 @@ func TestToStructured(t *testing.T) {
 			},
 		},
 		{
-			label:    "already a Structured interface",
+			label:    "already a SError interface",
 			err:      &testCustomStructuredError1{},
 			expected: &testCustomStructuredError1{},
 		},
@@ -136,7 +136,7 @@ func TestToStructured(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			got := ToStructured(tc.err)
 			if !reflect.DeepEqual(got, tc.expected) {
-				t.Errorf("expected Structured %v, got %v", tc.expected, got)
+				t.Errorf("expected SError %v, got %v", tc.expected, got)
 			}
 		})
 	}

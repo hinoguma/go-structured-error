@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import (
 	"errors"
@@ -36,7 +36,7 @@ func Join(errs ...error) error {
 // compatibility functions for errors.Wrap in pkg/errors, cockroachdb/errors, etc.
 // a lot of libraries make Wrap function to wrap errors with message
 // Wrap() clarifies return type is error interface due to compatibility.
-// But Wrap() makes sure the returned error is always Structured interface.
+// But Wrap() makes sure the returned error is always SError interface.
 func Wrap(err error, msg string) error {
 	if err == nil {
 		return nil
@@ -49,8 +49,8 @@ func Wrap(err error, msg string) error {
 }
 
 // Lift() is similar to Wrap() but now wrapping with message
-// Lift() converts any error to Structured
-// if the error is already Structured, it just adds stack trace if missing
+// Lift() converts any error to SError
+// if the error is already SError, it just adds stack trace if missing
 func Lift(err error) error {
 	if err == nil {
 		return nil
@@ -91,7 +91,7 @@ func Cause(err error) error {
 	}
 }
 
-// IsTYpe() checks whether the given error or any of its wrapped errors is of the specified ErrorType.
+// IsType() checks whether the given error or any of its wrapped errors is of the specified ErrorType.
 // errors.Is() checks for error equality, but this function checks for error type.
 func IsType(err error, t ErrorType) bool {
 	if err == nil {

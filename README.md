@@ -1,5 +1,5 @@
-# go-fault
-`go-fault` provides excellent error handling features to your application.<br>
+# go-structured-error
+`go-structured-error` provides excellent error handling features to your application.<br>
 <br>
 You can...<br>
 - Add stack trace
@@ -30,7 +30,7 @@ You can...<br>
 ```go
 import (
 "fmt"
-"github.com/hinoguma/go-fault/serrors"
+"github.com/hinoguma/go-structured-error/serrors"
 )
 
 // error with stack trace
@@ -53,10 +53,10 @@ fmt.Printf("%+v", err)
 
 ```go
 // standard library error
-originalErr := fmt.Errorf("original error") 
+goStdErr := fmt.Errorf("original error") 
 
 // add stack trace
-wrappedErr = serrors.Wrap(originalErr, "wrapped error")
+wrappedErr = serrors.Wrap(goStdErr, "wrapped error")
 
 fmt.Printf("%+v", wrappedErr)
 // Output:
@@ -72,9 +72,9 @@ fmt.Printf("%+v", wrappedErr)
 if the error already has stack trace,` Wrap()` does **not add new stack trace**.
 
 ```go
-import 	"github.com/hinoguma/go-fault/serrors"
+import 	"github.com/hinoguma/go-structured-error/serrors"
 
-// go-fault/serrors.New() return error with stack trace
+// go-structured-error/serrors.New() return error with stack trace
 errWithStack := serrors.New("error with stack")
 
 // no new stack trace added, just wrap error
@@ -91,13 +91,13 @@ Wrap() needs message parameter.<br>
 `Lift()` just **adds stack trace** to existing error if it doesn't have one.
 
 ```go
-import 	"github.com/hinoguma/go-fault/serrors"
+import 	"github.com/hinoguma/go-structured-error/serrors"
 
 // add stack trace to existing error
-originalErr := fmt.Errorf("original error")
+goStdErr := fmt.Errorf("original error")
 
 // adding stack trace
-serrors.Lift(originalErr)
+serrors.Lift(goStdErr)
 
 // not adding stack trace if error already has one
 errWithStack := serrors.New("error with stack")
@@ -113,11 +113,10 @@ serrors.Lift(errWithStack)
 You can **add type to error** and branch your error handling logic based on error type.
 
 ```go
-const CustomType1 fault.ErrorType = "CustomType1"
+const CustomType1 ErrorType = "CustomType1"
 
 // Set error type as CustomType1 
-err := serrors.New("error with type")
-err = serrors.With(err).Type(CustomType1).Err()
+err := serrors.New("error with type", serrors.WithType(CustomType1))
 ```
 <br>
 
@@ -144,12 +143,12 @@ You can **add context** to error using `With()`.<br>
 `With()` provides various methods to add context to error and **methods can be chained**.
 
 ```go
-err = serrors.With(err).
+err = serrors.Builder(err).
     Type(CustomType1).
     When(time.Now()).
     RequestID("request-1234").
     AddTagString("key1", "value1").
-    Err()
+    Build()
 ```
 
 #### When it happened? Which Request?
@@ -157,10 +156,10 @@ err = serrors.With(err).
 Use `When()` and `RequestID()`.
 
 ```go
-err = serrors.With(err).
+err = serrors.Builder(err).
 	When(time.Now()).
 	RequestID("request-1234").
-    Err()
+    Build()
 
 fmt.Printf("%+v", err)
 // Output:
@@ -179,12 +178,12 @@ fmt.Printf("%+v", err)
 ##### More Context
 Use `AddTagXXX()` to add more context to error.
 ```go
-err = serrors.With(err).
+err = serrors.Builder(err).
 	AddTagString("key1", "value1").
 	AddTagInt("key2", 42).
 	AddTagFloat("key3", 3.14).
 	AddTagBool("key4", true).
-	Err()
+    Build()
 
 fmt.Printf("%+v", err)
 // Output:
@@ -213,7 +212,7 @@ when, request_id, tags are included only if they are set.
 js := serrors.ToJsonString(err)
 fmt.Println(js)
 // Output:
-// {"type":"none","error":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1","key2":42,"key3":3.14,"key4":true},"stacktrace":[{"file":"main.go","line":75,"function":"github.com/hinoguma/go-fault.main"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}
+// {"type":"none","error":"go standard error","when":"2024-06-01T12:00:00Z","request_id":"12345","tags":{"tag1":"value1","key2":42,"key3":3.14,"key4":true},"stacktrace":[{"file":"main.go","line":75,"function":"github.com/hinoguma/go-structured-error.main"}],"sub_errors":[{"type":"none","message":"go standard error","stacktrace":[]},{"type":"none","message":"go standard error2","stacktrace":[]}]}
 
 // Output is one-liner JSON string.
 // Below is pretty printed version.
@@ -232,7 +231,7 @@ fmt.Println(js)
     {
       "file": "main.go",
       "line": 75,
-      "function": "github.com/hinoguma/go-fault.main"
+      "function": "github.com/hinoguma/go-structured-error.main"
     }
   ],
   "sub_errors": [

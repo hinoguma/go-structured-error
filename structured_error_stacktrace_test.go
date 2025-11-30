@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import "testing"
 
@@ -10,7 +10,7 @@ func TestStructuredError_WithStackTrace(t *testing.T) {
 		t.Errorf("expected stacktrace to be set, but it was empty")
 	}
 	firstFrame := err.stacktrace[0]
-	if firstFrame.Function != "github.com/hinoguma/go-fault.TestStructuredError_WithStackTrace" {
+	if firstFrame.Function != "github.com/hinoguma/go-structured-error.TestStructuredError_WithStackTrace" {
 		t.Errorf("expected top stack frame to be TestStructuredError_WithStackTrace, but got %s", err.stacktrace[0].Function)
 	}
 	if firstFrame.Line != 8 {
@@ -43,12 +43,12 @@ func TestStructuredError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     150,
-					Function: "github.com/hinoguma/go-fault.(*StructuredError).SetStackTraceWithSkipMaxDepth",
+					Function: "github.com/hinoguma/go-structured-error.(*StructuredError).SetStackTraceWithSkipMaxDepth",
 				},
 				{
 					File:     "ignored",
 					Line:     28,
-					Function: "github.com/hinoguma/go-fault.setStackTraceWithSkipMaxDepth3",
+					Function: "github.com/hinoguma/go-structured-error.setStackTraceWithSkipMaxDepth3",
 				},
 			},
 		},
@@ -60,12 +60,12 @@ func TestStructuredError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     28,
-					Function: "github.com/hinoguma/go-fault.setStackTraceWithSkipMaxDepth3",
+					Function: "github.com/hinoguma/go-structured-error.setStackTraceWithSkipMaxDepth3",
 				},
 				{
 					File:     "ignored",
 					Line:     25,
-					Function: "github.com/hinoguma/go-fault.setStackTraceWithSkipMaxDepth2",
+					Function: "github.com/hinoguma/go-structured-error.setStackTraceWithSkipMaxDepth2",
 				},
 			},
 		},
@@ -77,7 +77,7 @@ func TestStructuredError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 				{
 					File:     "ignored",
 					Line:     150,
-					Function: "github.com/hinoguma/go-fault.(*StructuredError).SetStackTraceWithSkipMaxDepth",
+					Function: "github.com/hinoguma/go-structured-error.(*StructuredError).SetStackTraceWithSkipMaxDepth",
 				},
 			},
 		},
@@ -87,7 +87,7 @@ func TestStructuredError_SetStackTraceWithSkipMaxDepth(t *testing.T) {
 		t.Run(tc.label, func(t *testing.T) {
 			err := &StructuredError{}
 			setStackTraceWithSkipMaxDepth1(err, tc.skip, tc.depth)
-			assertEqualsStackTrace(t, err.stacktrace, tc.expected, "github.com/hinoguma/go-fault.")
+			assertEqualsStackTrace(t, err.stacktrace, tc.expected, "github.com/hinoguma/go-structured-error.")
 		})
 	}
 

@@ -1,4 +1,4 @@
-package go_fault
+package serrors
 
 import (
 	"errors"
@@ -124,15 +124,15 @@ func TestErrorJsonPrinter_Print(t *testing.T) {
 	}
 }
 
-func TestVerboseFormatter_formatMain(t *testing.T) {
+func TestErrorVerbosePrinter_printSingle(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter VerboseFormatter
+		formatter ErrorVerbosePrinter
 		expected  string
 	}{
 		{
 			label: "required fields",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
@@ -160,7 +160,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "with when and requestId",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "sub_error1",
 				errorType:  ErrorType("testType"),
 				err:        errors.New("another error"),
@@ -179,7 +179,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "tags",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "sub_error2",
 				err:        errors.New("error with tags"),
 				stacktrace: make(StackTrace, 0),
@@ -205,7 +205,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "empty tags",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "sub_error3",
 				err:        errors.New("error with empty tags"),
 				stacktrace: make(StackTrace, 0),
@@ -222,7 +222,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 		},
 		{
 			label: "empty",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "main_error",
 				err:        nil,
 				stacktrace: nil,
@@ -237,7 +237,7 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.formatter.formatMain()
+			got := tc.formatter.printSingle()
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}
@@ -245,15 +245,15 @@ func TestVerboseFormatter_formatMain(t *testing.T) {
 	}
 }
 
-func TestVerboseFormatter_Format(t *testing.T) {
+func TestErrorVerbosePrinter_Print(t *testing.T) {
 	testCases := []struct {
 		label     string
-		formatter VerboseFormatter
+		formatter ErrorVerbosePrinter
 		expected  string
 	}{
 		{
 			label: "not sub errors",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:     "main_error",
 				errorType: ErrorTypeNone,
 				err:       errors.New("test error"),
@@ -275,7 +275,7 @@ func TestVerboseFormatter_Format(t *testing.T) {
 		},
 		{
 			label: "with sub errors",
-			formatter: VerboseFormatter{
+			formatter: ErrorVerbosePrinter{
 				title:      "main_error",
 				err:        errors.New("main error"),
 				stacktrace: make(StackTrace, 0),
@@ -325,7 +325,226 @@ main_error.sub2.sub2:
 
 	for _, tc := range testCases {
 		t.Run(tc.label, func(t *testing.T) {
-			got := tc.formatter.Format()
+			got := tc.formatter.Print()
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfMessage(t *testing.T) {
+	testCases := []struct {
+		label    string
+		err      error
+		expected string
+	}{
+		{
+			label:    "normal error",
+			err:      errors.New("sample error"),
+			expected: `"message":"sample error"`,
+		},
+		{
+			label:    "nil error",
+			err:      nil,
+			expected: `"message":"<no error>"`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfMessage(tc.err)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfRequestID(t *testing.T) {
+	testCases := []struct {
+		label     string
+		requestId string
+		expected  string
+	}{
+		{
+			label:     "non-empty request ID",
+			requestId: "req-12345",
+			expected:  `"request_id":"req-12345"`,
+		},
+		{
+			label:     "empty request ID",
+			requestId: "",
+			expected:  `"request_id":""`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfRequestID(tc.requestId)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfWhen(t *testing.T) {
+	testCases := []struct {
+		label    string
+		when     time.Time
+		layout   string
+		expected string
+	}{
+		{
+			label:    "specific time",
+			when:     time.Date(2024, 1, 1, 12, 0, 0, 0, time.UTC),
+			layout:   time.RFC3339,
+			expected: `"when":"2024-01-01T12:00:00Z"`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfWhen(tc.when, tc.layout)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfTags(t *testing.T) {
+	testCases := []struct {
+		label    string
+		tags     Tags
+		expected string
+	}{
+		{
+			label: "multiple tags",
+			tags: Tags{
+				tags: []Tag{
+					{Key: "key1", Value: StringTagValue("value1")},
+					{Key: "key2", Value: StringTagValue("value2")},
+				},
+				keyMap: map[string]int{
+					"key1": 0,
+					"key2": 1,
+				},
+			},
+			expected: `"tags":{"key1":"value1","key2":"value2"}`,
+		},
+		{
+			label:    "no tags",
+			tags:     Tags{tags: []Tag{}, keyMap: map[string]int{}},
+			expected: `"tags":{}`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfTags(tc.tags)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfType(t *testing.T) {
+	testCases := []struct {
+		label    string
+		errType  ErrorType
+		expected string
+	}{
+		{
+			label:    "defined error type",
+			errType:  ErrorType("customType"),
+			expected: `"type":"customType"`,
+		},
+		{
+			label:    "none error type",
+			errType:  ErrorTypeNone,
+			expected: `"type":"none"`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfType(tc.errType)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfStackTrace(t *testing.T) {
+	testCases := []struct {
+		label      string
+		stacktrace StackTrace
+		expected   string
+	}{
+		{
+			label: "multiple stack frames",
+			stacktrace: StackTrace{
+				{File: "file1.go", Line: 10, Function: "func1"},
+				{File: "file2.go", Line: 20, Function: "func2"},
+			},
+			expected: `"stacktrace":[{"file":"file1.go","line":10,"function":"func1"},{"file":"file2.go","line":20,"function":"func2"}]`,
+		},
+		{
+			label:      "no stack frames",
+			stacktrace: StackTrace{},
+			expected:   `"stacktrace":[]`,
+		},
+		{
+			label:      "nil stack trace",
+			stacktrace: nil,
+			expected:   `"stacktrace":[]`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfStackTrace(tc.stacktrace)
+			if got != tc.expected {
+				t.Errorf("expected %v, got %v", tc.expected, got)
+			}
+		})
+	}
+}
+
+func TestBuildJsonStringOfSubErrors(t *testing.T) {
+	testCases := []struct {
+		label     string
+		subErrors []error
+		expected  string
+	}{
+		{
+			label: "multiple sub errors",
+			subErrors: []error{
+				errors.New("sub error 1"),
+				&StructuredError{
+					err:       errors.New("sub error 2"),
+					errorType: ErrorType("type2"),
+					stacktrace: StackTrace{
+						{File: "file2.go", Line: 20, Function: "func2"},
+					},
+				},
+			},
+			expected: `"sub_errors":[{"type":"none","message":"sub error 1","stacktrace":[]},{"type":"type2","message":"sub error 2","stacktrace":[{"file":"file2.go","line":20,"function":"func2"}]}]`,
+		},
+		{
+			label:     "no sub errors",
+			subErrors: []error{},
+			expected:  `"sub_errors":[]`,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.label, func(t *testing.T) {
+			got := BuildJsonStringOfSubErrors(tc.subErrors)
 			if got != tc.expected {
 				t.Errorf("expected %v, got %v", tc.expected, got)
 			}
